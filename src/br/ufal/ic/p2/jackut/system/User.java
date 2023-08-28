@@ -7,10 +7,10 @@ public class User {
     private final String password;
     private final String name;
 
-    public User(String username, String password, String displayName) {
+    public User(String username, String password, String name) {
         this.login = username;
         this.password = password;
-        this.name = displayName;
+        this.name = name;
     }
 
     public String getLogin() {

@@ -6,9 +6,6 @@ import java.util.ArrayList;
 
 public class Facade {
     private final DB database = new DB();
-    User testUser = new User("", "", "");
-    // Usuario usuarioTeste = new Usuario("", "", "");
-
 
     public void zerarSistema() {
         database.flush();
@@ -18,42 +15,39 @@ public class Facade {
         database.newUser(login, senha, nome);
     }
 
-    public void abrirSessao (String login, String senha) {
-        if (database.startSession(login, senha) < 0){
-            System.out.println("User not found.");
-        };
+    public void abrirSessao (String login, String senha) {database.startSession(login, senha);
     }
 
-    public void getAtributoUsuario (String login, String atributo) {
-        String userAttribute = database.getUserAttribute(login, atributo);
+    public String getAtributoUsuario (String login, String atributo) {
+        return database.getUserAttribute(login, atributo);
        //usuarioTeste.getAtributoUsuario(usuarioTeste.getNome());
     }
 
     public void editarPerfil (String id, String atributo, String valor) {
-        //Modifica o valor de um atributo do perfil de um usuÃ¡rio para o valor especificado.
-        //Uma sessÃ£o vÃ¡lida (identificada por id) deve estar aberta para o usuÃ¡rio cujo perfil se quer editar.
+        //Modifica o valor de um atributo do perfil de um usuário para o valor especificado.
+        //Uma sessão válida (identificada por id) deve estar aberta para o usuário cujo perfil se quer editar.
     }
 
     public void adicionarAmigo (String id, String amigo) {
-        //Adiciona um amigo ao usuÃ¡rio aberto na sessÃ£o especificada atravÃ©s de id.}
+        //Adiciona um amigo ao usuário aberto na sessão especificada através de id.}
     }
 
     public void ehAmigo (String login, String amigo) {
-        //Retorna true se os dois usuÃ¡rios sÃ£o amigos.}
+        //Retorna true se os dois usuários são amigos.}
     }
     public void getAmigos (String login) {
-        //Retorna a lista de amigos do usuÃ¡rio especificado (codificado em uma String).
+        //Retorna a lista de amigos do usuário especificado (codificado em uma String).
     }
     public void enviarRecado (String id, String destinatario, String mensagem) {
-        //Envia o recado especificado ao destinatÃ¡rio especificado.
-        //Uma sessÃ£o vÃ¡lida (identificada por id) deve estar aberta para o usuÃ¡rio que deseja enviar o recado.}
+        //Envia o recado especificado ao destinatário especificado.
+        //Uma sessão válida (identificada por id) deve estar aberta para o usuário que deseja enviar o recado.}
     }
     public void lerRecado (String id) {
-        //Retorna o primeiro recado da fila de recados do usuÃ¡rio com a sessÃ£o aberta identificada por id.}
+        //Retorna o primeiro recado da fila de recados do usuário com a sessão aberta identificada por id.}
     }
 
     public void encerrarSistema () {
         //Grava o cadastro em arquivo e encerra o programa.
-        // Atingir o final de um script (final de arquivo) Ã© equivalente a encontrar este comando.
+        // Atingir o final de um script (final de arquivo) é equivalente a encontrar este comando.
     }
 }

@@ -27,7 +27,7 @@ public class Usuario {
             if(Objects.equals(usuario.getLogin(), nome)) {
                 System.out.println(usuario.getLogin());
             }else{
-                System.out.println("Usu√°rio n√£o cadastrado.");
+                System.out.println("Usu·rio n„o cadastrado.");
             }
         }
     }
