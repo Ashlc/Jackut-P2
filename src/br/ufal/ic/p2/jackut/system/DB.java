@@ -24,13 +24,21 @@ public class DB {
         return null;
     }
 
-    public void startSession(String login, String password){
+    public int startSession(String login, String password){
         User e = findUser(login);
 
         if (e.matchPassword(password)){
-            sessions.add(new Session(e, activeSessions));
+            int id = activeSessions;
+            sessions.add(new Session(e, id));
             activeSessions++;
+            return id;
         }
+        return -1;
+    }
+
+    public void flush() {
+        this.users = new ArrayList<>();
+        this.sessions = new ArrayList<>();
     }
 }
 

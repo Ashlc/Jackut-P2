@@ -3,9 +3,9 @@ package br.ufal.ic.p2.jackut.system;
 import java.util.Objects;
 
 public class User {
-    private String login;
-    private String password;
-    private String name;
+    private final String login;
+    private final String password;
+    private final String name;
 
     public User(String username, String password, String displayName) {
         this.login = username;

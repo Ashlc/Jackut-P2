@@ -1,14 +1,18 @@
 package br.ufal.ic.p2.jackut.facades;
 import br.ufal.ic.p2.jackut.system.DB;
+import br.ufal.ic.p2.jackut.system.User;
 import br.ufal.ic.p2.jackut.system.Usuario;
 
 import java.util.ArrayList;
 
 public class Facade {
     private DB database = new DB();
-    Usuario usuarioTeste = new Usuario("", "", "");
+    User testUser = new User("", "", "");
+    // Usuario usuarioTeste = new Usuario("", "", "");
+
+
     public void zerarSistema() {
-        //Apaga todos os dados mantidos no sistema.
+        database.flush();
     }
 
     public void criarUsuario(String login, String senha, String nome) {
@@ -16,11 +20,11 @@ public class Facade {
     }
 
     public void abrirSessao (String login, String senha) {
-        //Abre uma sessão para um usuário com o login e a senha fornecidos, e retorna um id para esta sessão.
+        database.startSession(login, senha);
     }
 
     public void getAtributoUsuario (String login, String atributo) {
-        usuarioTeste.getAtributoUsuario(usuarioTeste.getNome());
+       //usuarioTeste.getAtributoUsuario(usuarioTeste.getNome());
     }
 
     public void editarPerfil (String id, String atributo, String valor) {
