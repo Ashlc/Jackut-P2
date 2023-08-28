@@ -1,5 +1,5 @@
 package br.ufal.ic.p2.jackut.facades;
-
+import br.ufal.ic.p2.jackut.system.DB;
 import br.ufal.ic.p2.jackut.system.Usuario;
 
 import java.util.ArrayList;
