@@ -2,12 +2,12 @@ package br.ufal.ic.p2.jackut.system;
 import java.util.ArrayList;
 import java.util.Objects;
 
-public class DB {
+public class Database {
     private ArrayList<User> users;
     private ArrayList<Session> sessions;
     private int activeSessions = 0;
 
-    public DB() {
+    public Database() {
         this.users = new ArrayList<>();
         this.sessions = new ArrayList<>();
     }

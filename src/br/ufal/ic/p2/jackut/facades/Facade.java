@@ -1,25 +1,23 @@
 package br.ufal.ic.p2.jackut.facades;
-import br.ufal.ic.p2.jackut.system.DB;
-import br.ufal.ic.p2.jackut.system.User;
-import br.ufal.ic.p2.jackut.system.Usuario;
-import java.util.ArrayList;
+import br.ufal.ic.p2.jackut.system.Database;
 
 public class Facade {
-    private final DB database = new DB();
+    private final Database DB = new Database();
 
     public void zerarSistema() {
-        database.flush();
+        DB.flush();
     }
 
     public void criarUsuario(String login, String senha, String nome) {
-        database.newUser(login, senha, nome);
+        DB.newUser(login, senha, nome);
     }
 
-    public void abrirSessao (String login, String senha) {database.startSession(login, senha);
+    public void abrirSessao (String login, String senha) {
+        DB.startSession(login, senha);
     }
 
     public String getAtributoUsuario (String login, String atributo) {
-        return database.getUserAttribute(login, atributo);
+        return DB.getUserAttribute(login, atributo);
        //usuarioTeste.getAtributoUsuario(usuarioTeste.getNome());
     }
 
