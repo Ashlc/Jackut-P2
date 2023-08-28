@@ -1,5 +1,6 @@
 package br.ufal.ic.p2.jackut.system;
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class DB {
     private ArrayList<User> users;
@@ -39,6 +40,12 @@ public class DB {
     public void flush() {
         this.users = new ArrayList<>();
         this.sessions = new ArrayList<>();
+    }
+
+    public String getUserAttribute(String login, String attribute) {
+        User e = findUser(login);
+        if(Objects.equals(attribute, "nome")) return e.getName();
+        return null;
     }
 }
 

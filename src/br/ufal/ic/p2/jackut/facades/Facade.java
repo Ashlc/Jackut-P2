@@ -2,11 +2,10 @@ package br.ufal.ic.p2.jackut.facades;
 import br.ufal.ic.p2.jackut.system.DB;
 import br.ufal.ic.p2.jackut.system.User;
 import br.ufal.ic.p2.jackut.system.Usuario;
-
 import java.util.ArrayList;
 
 public class Facade {
-    private DB database = new DB();
+    private final DB database = new DB();
     User testUser = new User("", "", "");
     // Usuario usuarioTeste = new Usuario("", "", "");
 
@@ -20,10 +19,13 @@ public class Facade {
     }
 
     public void abrirSessao (String login, String senha) {
-        database.startSession(login, senha);
+        if (database.startSession(login, senha) < 0){
+            System.out.println("User not found.");
+        };
     }
 
     public void getAtributoUsuario (String login, String atributo) {
+        String userAttribute = database.getUserAttribute(login, atributo);
        //usuarioTeste.getAtributoUsuario(usuarioTeste.getNome());
     }
 
