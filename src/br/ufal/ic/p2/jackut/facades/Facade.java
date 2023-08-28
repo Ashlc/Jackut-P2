@@ -5,13 +5,14 @@ import br.ufal.ic.p2.jackut.system.Usuario;
 import java.util.ArrayList;
 
 public class Facade {
+    private DB database = new DB();
     Usuario usuarioTeste = new Usuario("", "", "");
     public void zerarSistema() {
         //Apaga todos os dados mantidos no sistema.
     }
 
-    public void criarUsuario (String login, String senha, String nome) {
-        //Cria um usuário com os dados da conta fornecidos.
+    public void criarUsuario(String login, String senha, String nome) {
+        database.newUser(login, senha, nome);
     }
 
     public void abrirSessao (String login, String senha) {
