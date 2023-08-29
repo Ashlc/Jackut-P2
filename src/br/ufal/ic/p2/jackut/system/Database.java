@@ -53,7 +53,7 @@ public class Database {
             }
         }
 
-        User user = new User(login, password, name);
+        User user = new User(login, password, name, null);
         this.users.add(user);
     }
 
@@ -85,7 +85,7 @@ public class Database {
      * @throws RuntimeException if the login or password is invalid.
      */
 
-    public int startSession(String login, String password){
+    public String startSession(String login, String password){
         /**
          * Starts a new session for a user.
          * @param login The user's login.
@@ -96,7 +96,7 @@ public class Database {
         try {
             User user = findUser(login); // find user by login
             if (user.matchPassword(password)) { // if user password is equal to password
-                int id = activeSessions; // id is equal to activeSessions
+                String id = String.valueOf(activeSessions); // id is equal to activeSessions
                 sessions.add(new Session(user, id)); // add new session to sessions
                 activeSessions++;
                 return id;
@@ -130,25 +130,58 @@ public class Database {
 
     public String getUserAttribute(String login, String attribute) {
         User user = findUser(login); // find user by login
-        if(Objects.equals(attribute, "nome")) return user.getName(); // if attribute is name
+        if(attribute.equals("nome")) {
+            return user.getName();
+        }
 
-        return null;
+        for (UserAttribute userAttribute : user.getAttributes()) { // for each userAttribute in user attributes
+            if (userAttribute.getAttributeName().equals(attribute)) {
+                return userAttribute.getValue();
+            }
+        }
+
+        throw new RuntimeException("Atributo não preenchido."); // if userAttribute not found
     }
 
-    /**
-     * Exports user data to a file.
-     */
-
-    public void shutdown() {
-        exportUsers();
+    public void editProfile(String sessionId, String attribute, String value) {
+        getUserBySessionId(sessionId).editAttribute(attribute, value);
     }
+
+    public Session findSession(String sessionId) {
+        for (Session session : this.sessions) { // for each session in sessions
+            if (Objects.equals(session.getSessionId(), sessionId)) { // if session id is equal to sessionId
+                return session;
+            }
+        }
+
+        throw new RuntimeException("Usuário não cadastrado."); // if session not found
+    }
+
+    public User getUserBySessionId(String sessionId) {
+        Session session = findSession(sessionId);
+        User user = session.getUser();
+
+        if(user == null) {
+            throw new RuntimeException("Usuário não cadastrado.");
+        }
+
+        return user;
+    }
+
+    // DATA HANDLER
 
     /**
      * Imports user data from a file.
      *
-     * @param filePath The path to the file containing user data.
-     * @return A list of User objects imported from the file.
+     * @param filePath The path to the file to import from.
      */
+
+    private void loadUsersFromFile(String filePath) {
+        List<User> importedUsers = importUsers(filePath);
+        if (!importedUsers.isEmpty()) {
+            this.users.addAll(importedUsers);
+        }
+    }
 
     public static List<User> importUsers(String filePath) {
         List<User> data = new ArrayList<>();
@@ -157,23 +190,50 @@ public class Database {
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(";");
-                if (parts.length == 3) {
+                if (parts.length >= 3) {
                     String login = parts[0];
                     String name = parts[1];
                     String password = parts[2];
-                    data.add(new User(login, password, name));
+
+                    ArrayList<UserAttribute> attributes = new ArrayList<>();
+                    for (int i = 3; i < parts.length; i++) {
+                        String[] attributeParts = parts[i].split(":");
+                        if (attributeParts.length == 2) {
+                            String attributeName = attributeParts[0];
+                            String attributeValue = attributeParts[1];
+                            attributes.add(new UserAttribute(attributeName, attributeValue));
+                        }
+                    }
+
+                    data.add(new User(login, password, name, attributes));
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        if (data.isEmpty()) {
-            data = new ArrayList<>();
-        }
-
         return data;
     }
+
+    public void shutdown() {
+        exportUsers();
+    }
+
+    /**
+     * Exports all user data to a file.
+     */
+
+    private String serializeAttributes(ArrayList<UserAttribute> attributes) {
+        StringBuilder serialized = new StringBuilder();
+        for (UserAttribute attribute : attributes) {
+            serialized.append(attribute.getAttributeName())
+                    .append(':')
+                    .append(attribute.getValue())
+                    .append(';');
+        }
+        return serialized.toString();
+    }
+
     public void exportUsers() {
 
         try (FileWriter fileWriter = new FileWriter("data.txt")) {
@@ -181,12 +241,14 @@ public class Database {
                 fileWriter.write(
                         user.getLogin() + ';' +
                                 user.getName() + ';' +
-                                user.getPassword() +
+                                user.getPassword() + ';' +
+                                serializeAttributes(user.getAttributes()) +
                                 System.lineSeparator());
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
 
 }

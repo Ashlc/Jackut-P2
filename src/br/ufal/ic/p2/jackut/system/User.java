@@ -1,6 +1,7 @@
 package br.ufal.ic.p2.jackut.system;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Objects;
 
 /**
@@ -12,6 +13,7 @@ public class User implements Serializable {
     private final String login;
     private final String password;
     private final String name;
+    private ArrayList<UserAttribute> attributes;
 
     /**
      * Constructs a User object with the provided login, password, and name.
@@ -21,11 +23,14 @@ public class User implements Serializable {
      * @param name     The name of the new user.
      */
 
-    public User(String username, String password, String name) {
+    public User(String username, String password, String name, ArrayList<UserAttribute> attributes) {
 
         this.login = username;
         this.password = password;
         this.name = name;
+        if(attributes != null) this.attributes = attributes;
+        else this.attributes = new ArrayList<>();
+
     }
 
     /**
@@ -67,5 +72,33 @@ public class User implements Serializable {
 
     public boolean matchPassword(String incoming) {
         return Objects.equals(incoming, this.password);
+    }
+
+    public void addAttribute(String attribute, String value) {
+        attributes.add(new UserAttribute(attribute, value));
+    }
+
+    public void editAttribute(String attribute, String value) {
+        for (UserAttribute userAttribute : attributes) {
+            if (userAttribute.getAttributeName().equals(attribute)) {
+                userAttribute.setValue(value);
+                return;
+            }
+        }
+
+        if(!value.isEmpty()) addAttribute(attribute, value);
+
+        else throw new RuntimeException("Atributo não preenchido.");
+    }
+
+    public ArrayList<UserAttribute> getAttributes() {
+        if(attributes.isEmpty()) throw new RuntimeException("Atributo não preenchido.");
+        return attributes;
+    }
+
+    public void exportAttributes() {
+        for (UserAttribute userAttribute : attributes) {
+            System.out.println(userAttribute.getAttributeName() + ": " + userAttribute.getValue());
+        }
     }
 }

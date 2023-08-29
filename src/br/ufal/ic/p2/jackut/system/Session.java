@@ -5,7 +5,7 @@ package br.ufal.ic.p2.jackut.system;
  */
 
 public class Session {
-    private final int sessionId;
+    private final String sessionId;
     private final User user;
 
     /**
@@ -15,8 +15,16 @@ public class Session {
      * @param sessionId  The unique identifier for the session.
      */
 
-    public Session(User user, int sessionId) {
+    public Session(User user, String sessionId) {
         this.sessionId = sessionId;
         this.user = user;
+    }
+
+    public String getSessionId() {
+        return sessionId;
+    }
+
+    public User getUser() {
+        return user;
     }
 }

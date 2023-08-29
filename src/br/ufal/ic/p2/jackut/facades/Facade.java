@@ -12,7 +12,7 @@ public class Facade {
         DB.newUser(login, senha, nome);
     }
 
-    public int abrirSessao (String login, String senha) {
+    public String abrirSessao (String login, String senha) {
         return DB.startSession(login, senha);
     }
 
@@ -22,8 +22,7 @@ public class Facade {
     }
 
     public void editarPerfil (String id, String atributo, String valor) {
-        //Modifica o valor de um atributo do perfil de um usuário para o valor especificado.
-        //Uma sessão válida (identificada por id) deve estar aberta para o usuário cujo perfil se quer editar.
+        DB.editProfile(id, atributo, valor);
     }
 
     public void adicionarAmigo (String id, String amigo) {
