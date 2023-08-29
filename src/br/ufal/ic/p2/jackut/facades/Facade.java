@@ -12,8 +12,8 @@ public class Facade {
         DB.newUser(login, senha, nome);
     }
 
-    public void abrirSessao (String login, String senha) {
-        DB.startSession(login, senha);
+    public int abrirSessao (String login, String senha) {
+        return DB.startSession(login, senha);
     }
 
     public String getAtributoUsuario (String login, String atributo) {
@@ -45,6 +45,7 @@ public class Facade {
     }
 
     public void encerrarSistema () {
+        DB.shutdown();
         //Grava o cadastro em arquivo e encerra o programa.
         // Atingir o final de um script (final de arquivo) é equivalente a encontrar este comando.
     }
