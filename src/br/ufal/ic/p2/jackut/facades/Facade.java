@@ -26,14 +26,14 @@ public class Facade {
     }
 
     public void adicionarAmigo (String id, String amigo) {
-        //Adiciona um amigo ao usuário aberto na sessão especificada através de id.}
+        DB.addFriend(id, amigo);
     }
 
-    public void ehAmigo (String login, String amigo) {
-        //Retorna true se os dois usuários são amigos.}
+    public boolean ehAmigo (String login, String amigo) {
+        return DB.areFriends(login, amigo);
     }
-    public void getAmigos (String login) {
-        //Retorna a lista de amigos do usuário especificado (codificado em uma String).
+    public String getAmigos (String login) {
+        return DB.getFriends(login);
     }
     public void enviarRecado (String id, String destinatario, String mensagem) {
         //Envia o recado especificado ao destinatário especificado.

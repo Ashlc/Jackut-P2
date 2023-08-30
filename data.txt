@@ -1,1 +1,3 @@
-jpsauve;Jacques Sauve;sauvejp;descricao:Quem souber, me diga.;estadoCivil:casado(a);aniversario:05/02;filhos:sim, moram comigo.;idiomas:ingles, frances, portugues;cidadeNatal:Hull, Canada;estilo:casual;fumo:nao;bebo:socialmente;moro:com companheiro(a);
+jpsauve;Jacques Sauve;sauvejp;;
+oabath;Osorio Abath;abatho;;
+jdoe;John Doe;abc;;

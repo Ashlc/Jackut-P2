@@ -29,6 +29,106 @@ public class Database {
         this.sessions = new ArrayList<>();
     }
 
+    public static List<User> importUsers(String filePath) {
+        List<User> data = new ArrayList<>();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(";");
+                if (parts.length >= 3) {
+                    String login = parts[0];
+                    String name = parts[1];
+                    String password = parts[2];
+
+                    ArrayList<UserAttribute> attributes = new ArrayList<>();
+                    for (int i = 3; i < parts.length; i++) {
+                        String[] attributeParts = parts[i].split(":");
+                        if (attributeParts.length == 2) {
+                            String attributeName = attributeParts[0];
+                            String attributeValue = attributeParts[1];
+                            attributes.add(new UserAttribute(attributeName, attributeValue));
+                        }
+                    }
+
+                    ArrayList<User> friends = new ArrayList<>();
+                    for (int i = 3; i < parts.length; i++) {
+                        String[] attributeParts = parts[i].split(":");
+                        if (attributeParts.length == 2) {
+                            String attributeName = attributeParts[0];
+                            String attributeValue = attributeParts[1];
+                            attributes.add(new UserAttribute(attributeName, attributeValue));
+                        }
+                    }
+
+
+                    data.add(new User(login, password, name, attributes, friends));
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return data;
+    }
+
+    public void shutdown() {
+        exportUsers();
+    }
+
+    /**
+     * Exports all user data to a file.
+     */
+
+    private String serializeAttributes(ArrayList<UserAttribute> attributes) {
+        StringBuilder serialized = new StringBuilder();
+        for (UserAttribute attribute : attributes) {
+            serialized.append(attribute.getAttributeName())
+                    .append(':')
+                    .append(attribute.getValue())
+                    .append(';');
+        }
+        return serialized.toString();
+    }
+
+    private String serializeFriends(ArrayList<User> friends) {
+        StringBuilder serialized = new StringBuilder();
+        for (User friend : friends) {
+            serialized.append(friend.getLogin())
+                    .append(';');
+        }
+        return serialized.toString();
+    }
+
+    public void exportUsers() {
+
+        try (FileWriter fileWriter = new FileWriter("data.txt")) {
+            for (User user : this.users) {
+                fileWriter.write(
+                        user.getLogin() + ';' +
+                                user.getName() + ';' +
+                                user.getPassword() + ';' +
+                                serializeAttributes(user.exportAttributes()) + ';' +
+                                serializeFriends(user.getFriends())  +
+                                System.lineSeparator());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    /**
+     * Flushes all user and session data from the database.
+     */
+
+
+    public void flush() {
+        this.users = new ArrayList<>(); // flush users
+        this.sessions = new ArrayList<>(); // flush sessions
+        System.out.println("Flushed data.");
+    }
+
     /**
      * Creates a new user account with the provided login, password, and name.
      *
@@ -53,7 +153,7 @@ public class Database {
             }
         }
 
-        User user = new User(login, password, name, null);
+        User user = new User(login, password, name, null, null);
         this.users.add(user);
     }
 
@@ -108,18 +208,6 @@ public class Database {
         }
     }
 
-
-    /**
-     * Flushes all user and session data from the database.
-     */
-
-
-    public void flush() {
-        this.users = new ArrayList<>(); // flush users
-        this.sessions = new ArrayList<>(); // flush sessions
-        System.out.println("Flushed data.");
-    }
-
     /**
      * Retrieves a specific attribute of a user.
      *
@@ -168,86 +256,45 @@ public class Database {
         return user;
     }
 
-    // DATA HANDLER
-
-    /**
-     * Imports user data from a file.
-     *
-     * @param filePath The path to the file to import from.
-     */
-
-    private void loadUsersFromFile(String filePath) {
-        List<User> importedUsers = importUsers(filePath);
-        if (!importedUsers.isEmpty()) {
-            this.users.addAll(importedUsers);
+    public void addFriend(String sessionId, String friendLogin) {
+        User user = getUserBySessionId(sessionId);
+        User friend = findUser(friendLogin);
+        if(user.equals(friend)) {
+            throw new RuntimeException("Usuário não pode adicionar a si mesmo como amigo.");
         }
+        if(user.getFriends().contains(friend) && !friend.getFriends().contains(user)) {
+            throw new RuntimeException("Usuário já está adicionado como amigo, esperando aceitação do convite.");
+        }
+
+        if(user.getFriends().contains(friend) && friend.getFriends().contains(user)) {
+            throw new RuntimeException("Usuário já está adicionado como amigo.");
+        }
+        user.addFriend(friend);
     }
 
-    public static List<User> importUsers(String filePath) {
-        List<User> data = new ArrayList<>();
+    public boolean areFriends(String userLogin, String friendLogin) {
+        User user = findUser(userLogin);
+        User friend = findUser(friendLogin);
+        return (user.getFriends().contains(friend) && friend.getFriends().contains(user));
+    }
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(";");
-                if (parts.length >= 3) {
-                    String login = parts[0];
-                    String name = parts[1];
-                    String password = parts[2];
+    public String getFriends(String login) {
+        User user = findUser(login);
+        if (user.getFriends().isEmpty()) return "{}";
 
-                    ArrayList<UserAttribute> attributes = new ArrayList<>();
-                    for (int i = 3; i < parts.length; i++) {
-                        String[] attributeParts = parts[i].split(":");
-                        if (attributeParts.length == 2) {
-                            String attributeName = attributeParts[0];
-                            String attributeValue = attributeParts[1];
-                            attributes.add(new UserAttribute(attributeName, attributeValue));
-                        }
-                    }
+        StringBuilder friends = new StringBuilder();
+        friends.append('{');
 
-                    data.add(new User(login, password, name, attributes));
+        for (User friend : user.getFriends()) {
+            if(friend.getFriends().contains(user)){
+                friends.append(friend.getLogin());
+                if(user.getFriends().indexOf(friend) != user.getFriends().size() - 1) {
+                    friends.append(",");
                 }
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
-
-        return data;
-    }
-
-    public void shutdown() {
-        exportUsers();
-    }
-
-    /**
-     * Exports all user data to a file.
-     */
-
-    private String serializeAttributes(ArrayList<UserAttribute> attributes) {
-        StringBuilder serialized = new StringBuilder();
-        for (UserAttribute attribute : attributes) {
-            serialized.append(attribute.getAttributeName())
-                    .append(':')
-                    .append(attribute.getValue())
-                    .append(';');
-        }
-        return serialized.toString();
-    }
-
-    public void exportUsers() {
-
-        try (FileWriter fileWriter = new FileWriter("data.txt")) {
-            for (User user : this.users) {
-                fileWriter.write(
-                        user.getLogin() + ';' +
-                                user.getName() + ';' +
-                                user.getPassword() + ';' +
-                                serializeAttributes(user.getAttributes()) +
-                                System.lineSeparator());
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        friends.append('}');
+        return friends.toString();
     }
 
 
