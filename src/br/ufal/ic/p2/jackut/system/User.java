@@ -15,6 +15,7 @@ public class User implements Serializable {
     private final String name;
     private ArrayList<UserAttribute> attributes;
     private ArrayList<User> friends;
+    private String friendImport;
 
     /**
      * Constructs a User object with the provided login, password, and name.
@@ -24,16 +25,15 @@ public class User implements Serializable {
      * @param name     The name of the new user.
      */
 
-    public User(String username, String password, String name, ArrayList<UserAttribute> attributes, ArrayList<User> friends){
+    public User(String username, String password, String name, ArrayList<UserAttribute> attributes, String friendImport){
 
         this.login = username;
         this.password = password;
         this.name = name;
         if(attributes != null) this.attributes = attributes;
         else this.attributes = new ArrayList<>();
-        if(friends != null) this.friends = friends;
-        else this.friends = new ArrayList<>();
-
+        this.friends = new ArrayList<>();
+        this.friendImport = friendImport;
     }
 
     /**
@@ -114,5 +114,9 @@ public class User implements Serializable {
 
     public boolean isFriend(User friend) {
         return friends.contains(friend);
+    }
+
+    public String getFriendImport() {
+        return friendImport;
     }
 }

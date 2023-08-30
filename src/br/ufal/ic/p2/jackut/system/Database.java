@@ -27,10 +27,18 @@ public class Database {
     public Database() {
         this.users = (ArrayList<User>) importUsers("data.txt");
         this.sessions = new ArrayList<>();
+
+        /*for(User user : this.users) {
+            if(user.getFriendImport() == null) {
+
+            }
+        }*/
+
     }
 
     public static List<User> importUsers(String filePath) {
         List<User> data = new ArrayList<>();
+        ArrayList<String> friendlist = new ArrayList<>();
 
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String line;
@@ -41,9 +49,13 @@ public class Database {
                     String name = parts[1];
                     String password = parts[2];
 
+                    int i;
                     ArrayList<UserAttribute> attributes = new ArrayList<>();
-                    for (int i = 3; i < parts.length; i++) {
-                        String[] attributeParts = parts[i].split(":");
+                    for (i = 3; i < parts.length; i++) {
+                        if (parts[i].equals("{")) {
+                            break;
+                        }
+                        String[] attributeParts = parts[i].split(";");
                         if (attributeParts.length == 2) {
                             String attributeName = attributeParts[0];
                             String attributeValue = attributeParts[1];
@@ -51,16 +63,15 @@ public class Database {
                         }
                     }
 
-                    ArrayList<User> friends = new ArrayList<>();
-                    for (int i = 3; i < parts.length; i++) {
-                        String[] attributeParts = parts[i].split(":");
-                        if (attributeParts.length == 2) {
-                            String attributeName = attributeParts[0];
-                            String attributeValue = attributeParts[1];
-                            attributes.add(new UserAttribute(attributeName, attributeValue));
+                    StringBuilder friendsLogin = new StringBuilder();
+                    for (i = i+1; i < parts.length; i++) {
+                        if (parts[i].equals("}")) {
+                            break; // Stop the loop when '}' is encountered
                         }
+                        friendsLogin.append(parts[i]);
                     }
 
+                    String friends = friendsLogin.toString();
 
                     data.add(new User(login, password, name, attributes, friends));
                 }
@@ -109,7 +120,7 @@ public class Database {
                                 user.getName() + ';' +
                                 user.getPassword() + ';' +
                                 serializeAttributes(user.exportAttributes()) + ';' +
-                                serializeFriends(user.getFriends())  +
+                                user.getFriends()  +
                                 System.lineSeparator());
             }
         } catch (IOException e) {
