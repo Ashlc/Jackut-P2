@@ -32,6 +32,12 @@ public class Database {
         }
     }
 
+    /**
+     * Imports user data from a file.
+     *
+     * @param filePath The path to the file to import.
+     * @return A list of User objects.
+     */
     public static List<User> importUsers(String filePath) {
         List<User> data = new ArrayList<>();
 
@@ -100,6 +106,10 @@ public class Database {
         return serialized.toString();
     }
 
+    /**
+     * Exports all user data to a file.
+     */
+
     public void exportUsers() {
         try (FileWriter fileWriter = new FileWriter(DATA_TXT)) {
             for (User user : this.users) {
@@ -120,7 +130,6 @@ public class Database {
     /**
      * Flushes all user and session data from the database.
      */
-
 
     public void flush() {
         this.users = new ArrayList<>();
@@ -183,12 +192,6 @@ public class Database {
      */
 
     public String startSession(String login, String password){
-        /**
-         * Starts a new session for a user.
-         * @param login The user's login.
-         * @param password The user's password.
-         * @return The session id.
-         */
 
         try {
             User user = findUser(login); // find user by login
@@ -228,9 +231,26 @@ public class Database {
         throw new RuntimeException("Atributo não preenchido."); // if userAttribute not found
     }
 
+    /**
+     * Edits a user's profile.
+     *
+     * @param sessionId The ID of the session.
+     * @param attribute The attribute to edit ("nome" for the user's name).
+     * @param value     The new value for the attribute.
+     * @throws RuntimeException if the session ID is invalid or if the attribute is invalid.
+     */
+
     public void editProfile(String sessionId, String attribute, String value) {
         getUserBySessionId(sessionId).editAttribute(attribute, value);
     }
+
+    /**
+     * Finds a session by its ID.
+     *
+     * @param sessionId The ID of the session to find.
+     * @return The Session object matching the ID.
+     * @throws RuntimeException if no session with the given ID is found.
+     */
 
     public Session findSession(String sessionId) {
         for (Session session : this.sessions) { // for each session in sessions
@@ -242,6 +262,14 @@ public class Database {
         throw new RuntimeException("Usuário não cadastrado."); // if session not found
     }
 
+    /**
+     * Finds a user by their session ID.
+     *
+     * @param sessionId The ID of the session to find the user for.
+     * @return The User object matching the session ID.
+     * @throws RuntimeException if no user with the given session ID is found.
+     */
+
     public User getUserBySessionId(String sessionId) {
         Session session = findSession(sessionId);
         User user = session.getUser();
@@ -252,6 +280,14 @@ public class Database {
 
         return user;
     }
+
+    /**
+     * Adds a friend to a user's friend list.
+     *
+     * @param sessionId   The ID of the session.
+     * @param friendLogin The login of the friend to add.
+     * @throws RuntimeException if the session ID is invalid or if the friend login is invalid.
+     */
 
     public void addFriend(String sessionId, String friendLogin) {
         User user = getUserBySessionId(sessionId);
@@ -269,11 +305,28 @@ public class Database {
         user.addFriend(friend.getLogin());
     }
 
+    /**
+     * Checks if two users are friends.
+     *
+     * @param userLogin   The login of the first user.
+     * @param friendLogin The login of the second user.
+     * @return True if the users are friends.
+     * @throws RuntimeException if either user login is invalid.
+     */
+
     public boolean areFriends(String userLogin, String friendLogin) {
         User user = findUser(userLogin);
         User friend = findUser(friendLogin);
         return (user.getFriends().contains(friend.getLogin()) && friend.getFriends().contains(user.getLogin()));
     }
+
+    /**
+     * Retrieves a user's friend list.
+     *
+     * @param login The login of the user.
+     * @return A string containing the user's friend list.
+     * @throws RuntimeException if the user login is invalid.
+     */
 
     public String getFriends(String login) {
         User user = findUser(login);
@@ -293,6 +346,40 @@ public class Database {
         }
         friends.append('}');
         return friends.toString();
+    }
+
+    /**
+     * Sends a message from one user to another.
+     *
+     * @param sessionId The ID of the session.
+     * @param recipient The login of the recipient.
+     * @param message   The message to send.
+     * @throws RuntimeException if the session ID is invalid or if the recipient login is invalid.
+     */
+
+    public void sendMessage(String sessionId, String recipient, String message) {
+        User sender = getUserBySessionId(sessionId);
+        User recipientUser = findUser(recipient);
+        if(sender.equals(recipientUser)) throw new RuntimeException("Usuário não pode enviar recado para si mesmo.");
+        if(recipientUser != null) {
+            recipientUser.addMessage(new Message(sender.getLogin(), recipient, message));
+        }
+    }
+
+    /**
+     * Reads a message from a user's inbox.
+     *
+     * @param sessionId The ID of the session.
+     * @return The message.
+     * @throws RuntimeException if the session ID is invalid.
+     */
+
+    public String readMessage(String sessionId) {
+        User user = getUserBySessionId(sessionId);
+        if(user != null) {
+            return user.readMessage();
+        }
+        return null;
     }
 
     public void deleteData() {
