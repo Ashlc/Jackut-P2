@@ -1,10 +1,8 @@
 package br.ufal.ic.p2.jackut.system;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -15,6 +13,7 @@ import java.util.Objects;
  */
 
 public class Database {
+    public static final String DATA_TXT = "data.txt";
     private ArrayList<User> users;
     private ArrayList<Session> sessions;
     private int activeSessions = 0;
@@ -25,8 +24,12 @@ public class Database {
      */
 
     public Database() {
-        this.users = (ArrayList<User>) importUsers("data.txt");
+        this.users = new ArrayList<>();
         this.sessions = new ArrayList<>();
+
+        if (new File(DATA_TXT).exists()) {
+            this.users = (ArrayList<User>) importUsers(DATA_TXT);
+        }
     }
 
     public static List<User> importUsers(String filePath) {
@@ -35,15 +38,17 @@ public class Database {
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(";");
-                if (parts.length >= 3) {
-                    String login = parts[0];
-                    String name = parts[1];
-                    String password = parts[2];
+                String[] parts = line.split("\\|");
+                String[] userInfo = parts[0].split(";");
+
+                if (userInfo.length >= 3) {
+                    String login = userInfo[0];
+                    String name = userInfo[1];
+                    String password = userInfo[2];
 
                     ArrayList<UserAttribute> attributes = new ArrayList<>();
-                    for (int i = 3; i < parts.length; i++) {
-                        String[] attributeParts = parts[i].split(":");
+                    for (int i = 3; i < userInfo.length; i++) {
+                        String[] attributeParts = userInfo[i].split(":");
                         if (attributeParts.length == 2) {
                             String attributeName = attributeParts[0];
                             String attributeValue = attributeParts[1];
@@ -51,18 +56,13 @@ public class Database {
                         }
                     }
 
-                    ArrayList<User> friends = new ArrayList<>();
-                    for (int i = 3; i < parts.length; i++) {
-                        String[] attributeParts = parts[i].split(":");
-                        if (attributeParts.length == 2) {
-                            String attributeName = attributeParts[0];
-                            String attributeValue = attributeParts[1];
-                            attributes.add(new UserAttribute(attributeName, attributeValue));
-                        }
+                    ArrayList<String> friendsList = new ArrayList<>();
+
+                    if (parts.length > 1) {
+                        friendsList.addAll(Arrays.asList(parts[1].split(";")));
                     }
 
-
-                    data.add(new User(login, password, name, attributes, friends));
+                    data.add(new User(login, password, name, attributes, friendsList));
                 }
             }
         } catch (IOException e) {
@@ -91,24 +91,23 @@ public class Database {
         return serialized.toString();
     }
 
-    private String serializeFriends(ArrayList<User> friends) {
+    private String serializeFriends(ArrayList<String> friends) {
         StringBuilder serialized = new StringBuilder();
-        for (User friend : friends) {
-            serialized.append(friend.getLogin())
+        for (String friend : friends) {
+            serialized.append(friend)
                     .append(';');
         }
         return serialized.toString();
     }
 
     public void exportUsers() {
-
-        try (FileWriter fileWriter = new FileWriter("data.txt")) {
+        try (FileWriter fileWriter = new FileWriter(DATA_TXT)) {
             for (User user : this.users) {
                 fileWriter.write(
                         user.getLogin() + ';' +
                                 user.getName() + ';' +
                                 user.getPassword() + ';' +
-                                serializeAttributes(user.exportAttributes()) + ';' +
+                                serializeAttributes(user.exportAttributes()) + '|' +
                                 serializeFriends(user.getFriends())  +
                                 System.lineSeparator());
             }
@@ -124,8 +123,8 @@ public class Database {
 
 
     public void flush() {
-        this.users = new ArrayList<>(); // flush users
-        this.sessions = new ArrayList<>(); // flush sessions
+        this.users = new ArrayList<>();
+        this.sessions = new ArrayList<>();
         System.out.println("Flushed data.");
     }
 
@@ -168,11 +167,9 @@ public class Database {
     public User findUser(String login) {
         for (User user : this.users) { // for each user in users
             if (user.getLogin().equals(login)) { // if user login is equal to login
-
                 return user;
             }
         }
-
         throw new RuntimeException("Usuário não cadastrado."); // if user not found
     }
 
@@ -262,20 +259,20 @@ public class Database {
         if(user.equals(friend)) {
             throw new RuntimeException("Usuário não pode adicionar a si mesmo como amigo.");
         }
-        if(user.getFriends().contains(friend) && !friend.getFriends().contains(user)) {
+        if(user.getFriends().contains(friend.getLogin()) && !friend.getFriends().contains(user.getLogin())) {
             throw new RuntimeException("Usuário já está adicionado como amigo, esperando aceitação do convite.");
         }
 
-        if(user.getFriends().contains(friend) && friend.getFriends().contains(user)) {
+        if(user.getFriends().contains(friend.getLogin()) && friend.getFriends().contains(user.getLogin())) {
             throw new RuntimeException("Usuário já está adicionado como amigo.");
         }
-        user.addFriend(friend);
+        user.addFriend(friend.getLogin());
     }
 
     public boolean areFriends(String userLogin, String friendLogin) {
         User user = findUser(userLogin);
         User friend = findUser(friendLogin);
-        return (user.getFriends().contains(friend) && friend.getFriends().contains(user));
+        return (user.getFriends().contains(friend.getLogin()) && friend.getFriends().contains(user.getLogin()));
     }
 
     public String getFriends(String login) {
@@ -285,10 +282,11 @@ public class Database {
         StringBuilder friends = new StringBuilder();
         friends.append('{');
 
-        for (User friend : user.getFriends()) {
-            if(friend.getFriends().contains(user)){
-                friends.append(friend.getLogin());
-                if(user.getFriends().indexOf(friend) != user.getFriends().size() - 1) {
+        for (String friendName : user.getFriends()) {
+            User friend = findUser(friendName);
+            if(friend.getFriends().contains(user.getLogin())){
+                friends.append(friendName);
+                if(user.getFriends().indexOf(friendName) != user.getFriends().size() - 1) {
                     friends.append(",");
                 }
             }
@@ -297,5 +295,7 @@ public class Database {
         return friends.toString();
     }
 
-
+    public void deleteData() {
+        new File(DATA_TXT).delete();
+    }
 }

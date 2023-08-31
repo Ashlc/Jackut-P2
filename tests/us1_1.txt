@@ -50,4 +50,4 @@ expectError "Login ou senha inválidos." abrirSessao login= senha=x
 expectError "Login ou senha inválidos." abrirSessao login=jpsauve senha=
 
 encerrarSistema
-quit
+#quit

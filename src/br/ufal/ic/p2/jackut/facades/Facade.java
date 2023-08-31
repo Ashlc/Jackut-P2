@@ -2,9 +2,10 @@ package br.ufal.ic.p2.jackut.facades;
 import br.ufal.ic.p2.jackut.system.Database;
 
 public class Facade {
-    private final Database DB = new Database();
+    private Database DB = new Database();
 
     public void zerarSistema() {
+        DB.deleteData();
         DB.flush();
     }
 
@@ -45,6 +46,7 @@ public class Facade {
 
     public void encerrarSistema () {
         DB.shutdown();
+        DB = new Database();
         //Grava o cadastro em arquivo e encerra o programa.
         // Atingir o final de um script (final de arquivo) é equivalente a encontrar este comando.
     }
