@@ -36,11 +36,10 @@ public class Facade {
         return DB.getFriends(login);
     }
     public void enviarRecado (String id, String destinatario, String mensagem) {
-        //Envia o recado especificado ao destinatário especificado.
-        //Uma sessão válida (identificada por id) deve estar aberta para o usuário que deseja enviar o recado.}
+        DB.sendMessage(id, destinatario, mensagem);
     }
-    public void lerRecado (String id) {
-        //Retorna o primeiro recado da fila de recados do usuário com a sessão aberta identificada por id.}
+    public String lerRecado (String id) {
+        return DB.readMessage(id);
     }
 
     public void encerrarSistema () {

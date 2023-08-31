@@ -15,8 +15,18 @@ import java.util.Objects;
  */
 
 public class Database {
+
+    /**
+     * The list of users in the database.
+     */
     private ArrayList<User> users;
+    /**
+     * The list of active sessions in the database.
+     */
     private ArrayList<Session> sessions;
+    /**
+     * The number of active sessions in the database.
+     */
     private int activeSessions = 0;
 
 
@@ -28,116 +38,21 @@ public class Database {
         this.users = (ArrayList<User>) importUsers("data.txt");
         this.sessions = new ArrayList<>();
 
-        /*for(User user : this.users) {
-            if(user.getFriendImport() == null) {
+        /*
+        for(User user : this.users) {
+            if(!user.getFriendImport().isEmpty()) {
+                String[] friends = user.getFriendImport().split(",");
 
-            }
-        }*/
-
-    }
-
-    public static List<User> importUsers(String filePath) {
-        List<User> data = new ArrayList<>();
-        ArrayList<String> friendlist = new ArrayList<>();
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(";");
-                if (parts.length >= 3) {
-                    String login = parts[0];
-                    String name = parts[1];
-                    String password = parts[2];
-
-                    int i;
-                    ArrayList<UserAttribute> attributes = new ArrayList<>();
-                    for (i = 3; i < parts.length; i++) {
-                        if (parts[i].equals("{")) {
-                            break;
-                        }
-                        String[] attributeParts = parts[i].split(";");
-                        if (attributeParts.length == 2) {
-                            String attributeName = attributeParts[0];
-                            String attributeValue = attributeParts[1];
-                            attributes.add(new UserAttribute(attributeName, attributeValue));
-                        }
+                for (String friend : friends) {
+                    try {
+                        user.addFriend(findUser(friend));
+                    } catch (RuntimeException error) {
+                        System.out.println("Usuário " + friend + " não encontrado.");
                     }
-
-                    StringBuilder friendsLogin = new StringBuilder();
-                    for (i = i+1; i < parts.length; i++) {
-                        if (parts[i].equals("}")) {
-                            break; // Stop the loop when '}' is encountered
-                        }
-                        friendsLogin.append(parts[i]);
-                    }
-
-                    String friends = friendsLogin.toString();
-
-                    data.add(new User(login, password, name, attributes, friends));
                 }
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
-
-        return data;
-    }
-
-    public void shutdown() {
-        exportUsers();
-    }
-
-    /**
-     * Exports all user data to a file.
-     */
-
-    private String serializeAttributes(ArrayList<UserAttribute> attributes) {
-        StringBuilder serialized = new StringBuilder();
-        for (UserAttribute attribute : attributes) {
-            serialized.append(attribute.getAttributeName())
-                    .append(':')
-                    .append(attribute.getValue())
-                    .append(';');
-        }
-        return serialized.toString();
-    }
-
-    private String serializeFriends(ArrayList<User> friends) {
-        StringBuilder serialized = new StringBuilder();
-        for (User friend : friends) {
-            serialized.append(friend.getLogin())
-                    .append(';');
-        }
-        return serialized.toString();
-    }
-
-    public void exportUsers() {
-
-        try (FileWriter fileWriter = new FileWriter("data.txt")) {
-            for (User user : this.users) {
-                fileWriter.write(
-                        user.getLogin() + ';' +
-                                user.getName() + ';' +
-                                user.getPassword() + ';' +
-                                serializeAttributes(user.exportAttributes()) + ';' +
-                                user.getFriends()  +
-                                System.lineSeparator());
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    /**
-     * Flushes all user and session data from the database.
-     */
-
-
-    public void flush() {
-        this.users = new ArrayList<>(); // flush users
-        this.sessions = new ArrayList<>(); // flush sessions
-        System.out.println("Flushed data.");
+        */
     }
 
     /**
@@ -164,7 +79,7 @@ public class Database {
             }
         }
 
-        User user = new User(login, password, name, null, null);
+        User user = new User(login, password, name, null);
         this.users.add(user);
     }
 
@@ -197,12 +112,6 @@ public class Database {
      */
 
     public String startSession(String login, String password){
-        /**
-         * Starts a new session for a user.
-         * @param login The user's login.
-         * @param password The user's password.
-         * @return The session id.
-         */
 
         try {
             User user = findUser(login); // find user by login
@@ -242,9 +151,26 @@ public class Database {
         throw new RuntimeException("Atributo não preenchido."); // if userAttribute not found
     }
 
+    /**
+     * Edits a user's profile.
+     *
+     * @param sessionId The ID of the session.
+     * @param attribute The attribute to edit ("nome" for the user's name).
+     * @param value     The new value for the attribute.
+     * @throws RuntimeException if the session ID is invalid or if the attribute is invalid.
+     */
+
     public void editProfile(String sessionId, String attribute, String value) {
         getUserBySessionId(sessionId).editAttribute(attribute, value);
     }
+
+    /**
+     * Finds a session by its ID.
+     *
+     * @param sessionId The ID of the session to find.
+     * @return The Session object matching the ID.
+     * @throws RuntimeException if no session with the given ID is found.
+     */
 
     public Session findSession(String sessionId) {
         for (Session session : this.sessions) { // for each session in sessions
@@ -255,6 +181,14 @@ public class Database {
 
         throw new RuntimeException("Usuário não cadastrado."); // if session not found
     }
+
+    /**
+     * Finds a user by their session ID.
+     *
+     * @param sessionId The ID of the session to find the user for.
+     * @return The User object matching the session ID.
+     * @throws RuntimeException if no user with the given session ID is found.
+     */
 
     public User getUserBySessionId(String sessionId) {
         Session session = findSession(sessionId);
@@ -267,27 +201,52 @@ public class Database {
         return user;
     }
 
+    /**
+     * Adds a friend to a user's friend list.
+     *
+     * @param sessionId   The ID of the session.
+     * @param friendLogin The login of the friend to add.
+     * @throws RuntimeException if the session ID is invalid or if the friend login is invalid.
+     */
+
     public void addFriend(String sessionId, String friendLogin) {
         User user = getUserBySessionId(sessionId);
         User friend = findUser(friendLogin);
         if(user.equals(friend)) {
             throw new RuntimeException("Usuário não pode adicionar a si mesmo como amigo.");
         }
-        if(user.getFriends().contains(friend) && !friend.getFriends().contains(user)) {
+        if(user.isFriend(friend) && !friend.isFriend(user)) {
             throw new RuntimeException("Usuário já está adicionado como amigo, esperando aceitação do convite.");
         }
 
-        if(user.getFriends().contains(friend) && friend.getFriends().contains(user)) {
+        if(user.isFriend(friend) && friend.isFriend(user)) {
             throw new RuntimeException("Usuário já está adicionado como amigo.");
         }
         user.addFriend(friend);
     }
 
+    /**
+     * Checks if two users are friends.
+     *
+     * @param userLogin   The login of the first user.
+     * @param friendLogin The login of the second user.
+     * @return True if the users are friends.
+     * @throws RuntimeException if either user login is invalid.
+     */
+
     public boolean areFriends(String userLogin, String friendLogin) {
         User user = findUser(userLogin);
         User friend = findUser(friendLogin);
-        return (user.getFriends().contains(friend) && friend.getFriends().contains(user));
+        return (user.isFriend(friend) && friend.isFriend(user));
     }
+
+    /**
+     * Retrieves a user's friend list.
+     *
+     * @param login The login of the user.
+     * @return A string containing the user's friend list.
+     * @throws RuntimeException if the user login is invalid.
+     */
 
     public String getFriends(String login) {
         User user = findUser(login);
@@ -308,5 +267,154 @@ public class Database {
         return friends.toString();
     }
 
+    /**
+     * Sends a message from one user to another.
+     *
+     * @param sessionId The ID of the session.
+     * @param recipient The login of the recipient.
+     * @param message   The message to send.
+     * @throws RuntimeException if the session ID is invalid or if the recipient login is invalid.
+     */
+
+    public void sendMessage(String sessionId, String recipient, String message) {
+        User sender = getUserBySessionId(sessionId);
+        User recipientUser = findUser(recipient);
+        if(sender.equals(recipientUser)) throw new RuntimeException("Usuário não pode enviar recado para si mesmo.");
+        if(recipientUser != null) {
+            recipientUser.addMessage(new Message(sender.getLogin(), recipient, message));
+        }
+    }
+
+    /**
+     * Reads a message from a user's inbox.
+     *
+     * @param sessionId The ID of the session.
+     * @return The message.
+     * @throws RuntimeException if the session ID is invalid.
+     */
+
+    public String readMessage(String sessionId) {
+        User user = getUserBySessionId(sessionId);
+        if(user != null) {
+            return user.readMessage();
+        }
+        return null;
+    }
+
+    /*  ======================================
+        ==========   DATA HANDLER   ==========
+        ======================================  */
+
+
+    /**
+     * Imports user data from a file.
+     *
+     * @param filePath The path to the file to import.
+     * @return A list of User objects.
+     */
+
+    public static List<User> importUsers(String filePath) {
+        List<User> data = new ArrayList<>();
+        ArrayList<String> friendlist = new ArrayList<>();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(";");
+                if (parts.length >= 3) {
+                    String login = parts[0];
+                    String name = parts[1];
+                    String password = parts[2];
+
+                    ArrayList<UserAttribute> attributes = new ArrayList<>();
+                    for (int i = 3; i < parts.length; i++) {
+                        String[] attributeParts = parts[i].split(":");
+                        if (attributeParts.length == 2) {
+                            String attributeName = attributeParts[0];
+                            String attributeValue = attributeParts[1];
+                            attributes.add(new UserAttribute(attributeName, attributeValue));
+                        }
+                    }
+
+                    /*StringBuilder friendsLogin = new StringBuilder();
+                    for (i = i+1; i < parts.length; i++) {
+                        if (parts[i].equals("}")) {
+                            break; // Stop the loop when '}' is encountered
+                        }
+                        friendsLogin.append(parts[i]);
+                        friendsLogin.append(",");
+                    }
+
+                    String friends = friendsLogin.toString();*/
+
+                    data.add(new User(login, password, name, attributes));
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return data;
+    }
+
+    public void shutdown() {
+        exportUsers();
+    }
+
+    /**
+     * Exports all user data to a file.
+     */
+
+    private String serializeAttributes(ArrayList<UserAttribute> attributes) {
+        StringBuilder serialized = new StringBuilder();
+        for (UserAttribute attribute : attributes) {
+            serialized.append(attribute.getAttributeName())
+                    .append(':')
+                    .append(attribute.getValue())
+                    .append(';');
+        }
+        return serialized.toString();
+    }
+
+    /*private String serializeFriends(ArrayList<User> friends) {
+        StringBuilder serialized = new StringBuilder();
+        for (User friend : friends) {
+            serialized.append(friend.getLogin())
+                    .append(';');
+        }
+        return serialized.toString();
+    }*/
+
+    /**
+     * Exports all user data to a file.
+     */
+
+    public void exportUsers() {
+
+        try (FileWriter fileWriter = new FileWriter("data.txt")) {
+            for (User user : this.users) {
+                fileWriter.write(
+                        user.getLogin() + ';' +
+                                user.getName() + ';' +
+                                user.getPassword() + ';' +
+                                serializeAttributes(user.exportAttributes()) +
+                                System.lineSeparator());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    /**
+     * Flushes all user and session data from the database.
+     */
+
+
+    public void flush() {
+        this.users = new ArrayList<>(); // flush users
+        this.sessions = new ArrayList<>(); // flush sessions
+        System.out.println("Flushed data.");
+    }
 
 }
