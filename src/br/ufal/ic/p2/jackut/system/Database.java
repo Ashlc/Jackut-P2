@@ -1,10 +1,7 @@
 package br.ufal.ic.p2.jackut.system;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * This class represents a simple database system for managing user accounts and sessions.
@@ -18,6 +15,8 @@ public class Database {
     private ArrayList<Session> sessions;
     private int activeSessions = 0;
 
+//    private ArrayList<Comunity> comunities;
+    private HashMap<String, Community> communities = new HashMap<>();
 
     /**
      * Constructs a Database object with initial user data imported from a file.
@@ -148,16 +147,16 @@ public class Database {
 
     public void newUser(String login, String password, String name){
         if(login == null) {
-            throw new RuntimeException("Login inválido.");
+            throw new UserCreationException("Login inválido.");
         }
 
         if(password == null) {
-            throw new RuntimeException("Senha inválida.");
+            throw new UserCreationException("Senha inválida.");
         }
 
         for (User user : this.users) {
             if (user.getLogin().equals(login)) {
-                throw new RuntimeException("Conta com esse nome já existe.");
+                throw new UserCreationException("Conta com esse nome já existe.");
             }
         }
 
@@ -384,5 +383,24 @@ public class Database {
 
     public void deleteData() {
         new File(DATA_TXT).delete();
+    }
+
+    public void createComunity(int session, String name, String description) {
+        if (communities.containsKey(name)) {
+            throw new CommunityCreationException("Comunidade com esse nome já existe.");
+        }
+
+        Community comunity = new Community(session, name, description);
+        communities.put(name, comunity);
+
+    }
+
+    public String getCommunityDescription(String name) {
+        Community community = communities.get(name);
+        return community.getComunityDescription();
+    }
+
+    public String getCommunityOwner(String name) {
+        Community community = communities.
     }
 }

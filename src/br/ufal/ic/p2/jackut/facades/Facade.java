@@ -49,4 +49,16 @@ public class Facade {
         //Grava o cadastro em arquivo e encerra o programa.
         // Atingir o final de um script (final de arquivo) é equivalente a encontrar este comando.
     }
+
+    public void criarComunidade(int sessao, String nome, String descricao) {
+        DB.createComunity(sessao, nome, descricao);
+    }
+
+    public String getDescricaoComunidade(String name) {
+        return DB.getCommunityDescription(name);
+    }
+
+    public String getDonoComunidade(String nome) {
+        return DB.getCommunityOwner(nome);
+    }
 }
