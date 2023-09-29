@@ -1,5 +1,8 @@
 package br.ufal.ic.p2.jackut.system;
 
+import br.ufal.ic.p2.jackut.exceptions.CommunityCreationException;
+import br.ufal.ic.p2.jackut.exceptions.UserCreationException;
+
 import java.io.*;
 import java.util.*;
 
@@ -385,22 +388,42 @@ public class Database {
         new File(DATA_TXT).delete();
     }
 
-    public void createComunity(int session, String name, String description) {
+    public void createComunity(String session, String name, String description) {
         if (communities.containsKey(name)) {
             throw new CommunityCreationException("Comunidade com esse nome já existe.");
         }
 
-        Community comunity = new Community(session, name, description);
-        communities.put(name, comunity);
+        Community community = new Community(session, name, description);
+        communities.put(name, community);
 
+        String owner = getUserBySessionId(session).getLogin();
+
+        community.setCommunityOwner(session, owner);
+
+        community.setMember(owner);
     }
 
     public String getCommunityDescription(String name) {
-        Community community = communities.get(name);
-        return community.getComunityDescription();
+        if(communities.containsKey(name)){
+            return communities.get(name).getComunityDescription();
+        }else {
+            throw new CommunityCreationException("Comunidade não existe.");
+        }
     }
 
     public String getCommunityOwner(String name) {
-        Community community = communities.
+        if(communities.containsKey(name)) {
+            return communities.get(name).getCommunityOwner();
+        }else {
+            throw new CommunityCreationException("Comunidade não existe.");
+        }
+    }
+
+    public ArrayList<String> getCommunityMembers(String name) {
+        if(communities.containsKey(name)) {
+            return communities.get(name).getMembers();
+        }else {
+            throw new CommunityCreationException("Comunidade não existe.");
+        }
     }
 }

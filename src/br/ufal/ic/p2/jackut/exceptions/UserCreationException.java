@@ -1,4 +1,4 @@
-package br.ufal.ic.p2.jackut.system;
+package br.ufal.ic.p2.jackut.exceptions;
 
 public class UserCreationException extends RuntimeException {
     public UserCreationException(String message) {

@@ -1,5 +1,8 @@
 package br.ufal.ic.p2.jackut.facades;
 import br.ufal.ic.p2.jackut.system.Database;
+import br.ufal.ic.p2.jackut.system.Session;
+
+import java.util.ArrayList;
 
 public class Facade {
     private Database DB = new Database();
@@ -50,7 +53,7 @@ public class Facade {
         // Atingir o final de um script (final de arquivo) é equivalente a encontrar este comando.
     }
 
-    public void criarComunidade(int sessao, String nome, String descricao) {
+    public void criarComunidade(String sessao, String nome, String descricao) {
         DB.createComunity(sessao, nome, descricao);
     }
 
@@ -60,5 +63,11 @@ public class Facade {
 
     public String getDonoComunidade(String nome) {
         return DB.getCommunityOwner(nome);
+    }
+
+    public String getMembrosComunidade(String nome) {
+        ArrayList<String> members = DB.getCommunityMembers(nome);
+        members.toString();
+        return "{" + String.join(",", members) + "}";
     }
 }
