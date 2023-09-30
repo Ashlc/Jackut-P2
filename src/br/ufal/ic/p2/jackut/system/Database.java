@@ -4,8 +4,11 @@ import br.ufal.ic.p2.jackut.exceptions.CommunityCreationException;
 import br.ufal.ic.p2.jackut.exceptions.UserCreationException;
 
 import java.io.*;
+import java.lang.reflect.Type;
 import java.util.*;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.*;
 /**
  * This class represents a simple database system for managing user accounts and sessions.
  * It provides methods for creating, finding, and managing user accounts, as well as handling
@@ -21,6 +24,8 @@ public class Database {
 //    private ArrayList<Comunity> comunities;
     private HashMap<String, Community> communities = new HashMap<>();
 
+    ObjectMapper objectMapper = new ObjectMapper();
+
     /**
      * Constructs a Database object with initial user data imported from a file.
      */
@@ -28,106 +33,35 @@ public class Database {
     public Database() {
         this.users = new ArrayList<>();
         this.sessions = new ArrayList<>();
+        this.activeSessions = 0;
 
-        if (new File(DATA_TXT).exists()) {
-            this.users = (ArrayList<User>) importUsers(DATA_TXT);
-        }
-    }
-
-    /**
-     * Imports user data from a file.
-     *
-     * @param filePath The path to the file to import.
-     * @return A list of User objects.
-     */
-    public static List<User> importUsers(String filePath) {
-        List<User> data = new ArrayList<>();
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split("\\|");
-                String[] userInfo = parts[0].split(";");
-
-                if (userInfo.length >= 3) {
-                    String login = userInfo[0];
-                    String name = userInfo[1];
-                    String password = userInfo[2];
-
-                    ArrayList<UserAttribute> attributes = new ArrayList<>();
-                    for (int i = 3; i < userInfo.length; i++) {
-                        String[] attributeParts = userInfo[i].split(":");
-                        if (attributeParts.length == 2) {
-                            String attributeName = attributeParts[0];
-                            String attributeValue = attributeParts[1];
-                            attributes.add(new UserAttribute(attributeName, attributeValue));
-                        }
-                    }
-
-                    ArrayList<String> friendsList = new ArrayList<>();
-
-                    if (parts.length > 1) {
-                        friendsList.addAll(Arrays.asList(parts[1].split(";")));
-                    }
-
-                    data.add(new User(login, password, name, attributes, friendsList));
-                }
-            }
-        } catch (IOException e) {
+        try {
+            usersFromJSON();
+        } catch (Exception e) {
             e.printStackTrace();
         }
-
-        return data;
     }
 
     public void shutdown() {
-        exportUsers();
+        usersToJSON();
+//        exportUsers();
     }
 
-    /**
-     * Exports all user data to a file.
-     */
-
-    private String serializeAttributes(ArrayList<UserAttribute> attributes) {
-        StringBuilder serialized = new StringBuilder();
-        for (UserAttribute attribute : attributes) {
-            serialized.append(attribute.getAttributeName())
-                    .append(':')
-                    .append(attribute.getValue())
-                    .append(';');
-        }
-        return serialized.toString();
-    }
-
-    private String serializeFriends(ArrayList<String> friends) {
-        StringBuilder serialized = new StringBuilder();
-        for (String friend : friends) {
-            serialized.append(friend)
-                    .append(';');
-        }
-        return serialized.toString();
-    }
-
-    /**
-     * Exports all user data to a file.
-     */
-
-    public void exportUsers() {
-        try (FileWriter fileWriter = new FileWriter(DATA_TXT)) {
-            for (User user : this.users) {
-                fileWriter.write(
-                        user.getLogin() + ';' +
-                                user.getName() + ';' +
-                                user.getPassword() + ';' +
-                                serializeAttributes(user.exportAttributes()) + '|' +
-                                serializeFriends(user.getFriends())  +
-                                System.lineSeparator());
-            }
+    public void usersToJSON() {
+        try{
+            objectMapper.writeValue(new File("users.json"), users);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    public void usersFromJSON() {
+        try {
+            this.users = objectMapper.readValue(new File("users.json"), this.users.getClass());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     /**
      * Flushes all user and session data from the database.
@@ -145,7 +79,7 @@ public class Database {
      * @param login    The login name for the new user.
      * @param password The password for the new user.
      * @param name     The name of the new user.
-     * @throws RuntimeException if the login or password is invalid or if an account with the same login already exists.
+     * @throws UserCreationException if the login or password is invalid or if an account with the same login already exists.
      */
 
     public void newUser(String login, String password, String name){
@@ -163,7 +97,7 @@ public class Database {
             }
         }
 
-        User user = new User(login, password, name, null, null);
+        User user = new User(login, password, name, null, null, null);
         this.users.add(user);
     }
 
@@ -224,9 +158,11 @@ public class Database {
             return user.getName();
         }
 
-        for (UserAttribute userAttribute : user.getAttributes()) { // for each userAttribute in user attributes
-            if (userAttribute.getAttributeName().equals(attribute)) {
-                return userAttribute.getValue();
+        if(user.getAttributes().isEmpty()) throw new RuntimeException("Atributo não preenchido.");
+
+        for(HashMap<String, String> map : user.getAttributes()) {
+            if(map.containsKey(attribute)) {
+                return map.get(attribute);
             }
         }
 
@@ -385,7 +321,7 @@ public class Database {
     }
 
     public void deleteData() {
-        new File(DATA_TXT).delete();
+        new File("users.json").delete();
     }
 
     public void createComunity(String session, String name, String description) {
@@ -420,6 +356,7 @@ public class Database {
     }
 
     public ArrayList<String> getCommunityMembers(String name) {
+
         if(communities.containsKey(name)) {
             return communities.get(name).getMembers();
         }else {

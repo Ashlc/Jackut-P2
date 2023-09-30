@@ -2,6 +2,7 @@ package br.ufal.ic.p2.jackut.system;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Objects;
 
 /**
@@ -25,7 +26,7 @@ public class User implements Serializable {
     /**
      * The user's attributes.
      */
-    private ArrayList<UserAttribute> attributes;
+    private final ArrayList<HashMap<String, String>> attributes;
     /**
      * The user's friends.
      */
@@ -43,7 +44,13 @@ public class User implements Serializable {
      * @param name     The name of the new user.
      */
 
-    public User(String username, String password, String name, ArrayList<UserAttribute> attributes, ArrayList<String> friends){
+    public User(
+            String username,
+            String password,
+            String name,
+            ArrayList<HashMap<String, String>> attributes,
+            ArrayList<String> friends,
+            ArrayList<Message> inbox){
 
         this.login = username;
         this.password = password;
@@ -52,8 +59,8 @@ public class User implements Serializable {
         else this.attributes = new ArrayList<>();
         if(friends != null) this.friends = friends;
         else this.friends = new ArrayList<>();
-        this.inbox = new ArrayList<>();
-
+        if(inbox != null) this.inbox = inbox;
+        else this.inbox = new ArrayList<>();
     }
 
     /**
@@ -105,7 +112,10 @@ public class User implements Serializable {
      */
 
     public void addAttribute(String attribute, String value) {
-        attributes.add(new UserAttribute(attribute, value));
+        attributes.add(
+                new HashMap<String, String>() {{
+                put(attribute, value);
+        }});
     }
 
     /**
@@ -116,16 +126,14 @@ public class User implements Serializable {
      */
 
     public void editAttribute(String attribute, String value) {
-        for (UserAttribute userAttribute : attributes) {
-            if (userAttribute.getAttributeName().equals(attribute)) {
-                userAttribute.setValue(value);
+
+        for(HashMap<String, String> map : attributes) {
+            if(map.containsKey(attribute)) {
+                map.replace(attribute, value);
                 return;
             }
         }
-
-        if(!value.isEmpty()) addAttribute(attribute, value);
-
-        else throw new RuntimeException("Atributo não preenchido.");
+        throw new RuntimeException("Atributo não preenchido.");
     }
 
     /**
@@ -134,8 +142,7 @@ public class User implements Serializable {
      * @return The value of the provided attribute.
      */
 
-    public ArrayList<UserAttribute> getAttributes() {
-        if(attributes.isEmpty()) throw new RuntimeException("Atributo não preenchido.");
+    public ArrayList<HashMap<String,String>> getAttributes() {
         return attributes;
     }
 
@@ -143,7 +150,7 @@ public class User implements Serializable {
      * Exports attributes to be saved in a file.
      */
 
-    public ArrayList<UserAttribute> exportAttributes() {
+    public ArrayList<HashMap<String, String>> exportAttributes() {
         return attributes;
     }
 
