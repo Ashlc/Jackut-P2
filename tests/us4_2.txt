@@ -12,7 +12,7 @@ expect "Recado de Osorio para John" lerRecado id=${id3}
 expect "Recado de Jacques para John" lerRecado id=${id3}
 
 expectError "Não há recados." lerRecado id=${id1}
-expectError "Não há recados." lerReca\o id=${id2}
+expectError "Não há recados." lerRecado id=${id2}
 expectError "Não há recados." lerRecado id=${id3}
 
 encerrarSistema

@@ -1,15 +1,17 @@
 package br.ufal.ic.p2.jackut.system;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Objects;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * This class represents a user account in the system.
  * It contains the user's login name, password, and name.
  */
 
-public class User implements Serializable {
+public class User {
     /**
      * The login name of the user.
      */
@@ -25,7 +27,7 @@ public class User implements Serializable {
     /**
      * The user's attributes.
      */
-    private ArrayList<UserAttribute> attributes;
+    private final ArrayList<UserAttribute> attributes;
     /**
      * The user's friends.
      */
@@ -43,8 +45,15 @@ public class User implements Serializable {
      * @param name     The name of the new user.
      */
 
-    public User(String username, String password, String name, ArrayList<UserAttribute> attributes, ArrayList<String> friends){
-
+    @JsonCreator
+    public User(
+            @JsonProperty("username") String username,
+            @JsonProperty("password") String password,
+            @JsonProperty("name") String name,
+            @JsonProperty("attributes") ArrayList<UserAttribute> attributes,
+            @JsonProperty("friends") ArrayList<String> friends,
+            @JsonProperty("inbox") ArrayList<Message> inbox)
+    {
         this.login = username;
         this.password = password;
         this.name = name;
@@ -52,8 +61,8 @@ public class User implements Serializable {
         else this.attributes = new ArrayList<>();
         if(friends != null) this.friends = friends;
         else this.friends = new ArrayList<>();
-        this.inbox = new ArrayList<>();
-
+        if(inbox != null) this.inbox = inbox;
+        else this.inbox = new ArrayList<>();
     }
 
     /**
@@ -117,15 +126,12 @@ public class User implements Serializable {
 
     public void editAttribute(String attribute, String value) {
         for (UserAttribute userAttribute : attributes) {
-            if (userAttribute.getAttributeName().equals(attribute)) {
+            if (userAttribute.getName().equals(attribute)) {
                 userAttribute.setValue(value);
                 return;
             }
         }
-
-        if(!value.isEmpty()) addAttribute(attribute, value);
-
-        else throw new RuntimeException("Atributo não preenchido.");
+        addAttribute(attribute, value);
     }
 
     /**
@@ -135,7 +141,6 @@ public class User implements Serializable {
      */
 
     public ArrayList<UserAttribute> getAttributes() {
-        if(attributes.isEmpty()) throw new RuntimeException("Atributo não preenchido.");
         return attributes;
     }
 
@@ -199,6 +204,10 @@ public class User implements Serializable {
         if(inbox.isEmpty()) throw new RuntimeException("Não há recados.");
         Message message = inbox.get(0);
         inbox.remove(0);
-        return message.getMessage();
+        return message.message();
+    }
+
+    public ArrayList<Message> getInbox() {
+        return inbox;
     }
 }
