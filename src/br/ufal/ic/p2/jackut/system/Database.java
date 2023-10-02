@@ -133,7 +133,7 @@ public class Database {
             }
         }
 
-        User user = new User(login, password, name, null, null, null);
+        User user = new User(login, password, name, null, null, null, null);
         this.users.add(user);
     }
 
@@ -355,19 +355,16 @@ public class Database {
         return null;
     }
 
-    public void sendCommunityMessage(String sessionId, String communityName, String message) {
+    public void sendCommunityMessage(String sessionId, String communityName, String contents) {
         User sender = getUserBySessionId(sessionId);
         String login = sender.getLogin();
-        System.out.println(login);
+        Message message = new Message(login, contents);
+
         Community community = getCommunity(communityName);
-
-        if (community.hasMember(login)) {
-            community.addMessage(new Message(sender.getLogin(), message));
-            System.out.println("Mensagem enviada.");
-        } else if (!community.hasMember(login)) {
-            throw new CommunityException("Usuário não faz parte dessa comunidade.");
+        for (String member : community.getMembers()) {
+            User user = findUser(member);
+            user.getPost(message);
         }
-
     }
 
     public Community getCommunity(String name) {
@@ -378,15 +375,9 @@ public class Database {
         }
     }
 
-    public String readCommunityMessage(String sessionId) {
+    public String readPosts(String sessionId) {
         User user = getUserBySessionId(sessionId);
-        String login = user.getLogin();
-        for (Community community : communities.values()) {
-            if (community.hasMember(login)) {
-                return community.readMessage();
-            }
-        }
-        return null;
+        return user.readPost();
     }
 
     public void createComunity(String session, String name, String description) {
@@ -398,7 +389,7 @@ public class Database {
         ArrayList<String> members = new ArrayList<>();
         members.add(login);
 
-        Community community = new Community(name, description, login, members, new ArrayList<Message>());
+        Community community = new Community(name, description, login, members);
         communities.put(name, community);
 
     }

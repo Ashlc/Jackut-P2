@@ -11,21 +11,18 @@ public class Community {
     private final String description;
     private final String owner;
     private ArrayList<String> members;
-    private ArrayList<Message> inbox;
 
     @JsonCreator
     public Community(
             @JsonProperty("name") String name,
             @JsonProperty("description") String description,
             @JsonProperty("owner") String owner,
-            @JsonProperty("members") ArrayList<String> members,
-            @JsonProperty("inbox") ArrayList<Message> inbox) {
+            @JsonProperty("members") ArrayList<String> members) {
 
         this.owner = owner;
         this.name = name;
         this.description = description;
         this.members = members;
-        this.inbox = inbox;
 
     }
 
@@ -60,20 +57,6 @@ public class Community {
         if (!this.members.contains(login)) {
             this.members.add(login);
         } else throw new CommunityException("Usuario já faz parte dessa comunidade.");
-    }
-
-    public void addMessage(Message message) {
-        this.inbox.add(message);
-    }
-
-    public String readMessage() {
-        if (!this.inbox.isEmpty()) {
-            String message = this.inbox.get(0).message();
-            this.inbox.remove(0);
-            return message;
-        } else {
-            throw new CommunityException("Não há mensagens.");
-        }
     }
 
     public boolean hasMember(String login) {

@@ -83,6 +83,6 @@ public class Facade {
     }
 
     public String lerMensagem(String sessao) {
-        return DB.readCommunityMessage(sessao);
+        return DB.readPosts(sessao);
     }
 }

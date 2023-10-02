@@ -37,6 +37,8 @@ public class User {
      */
     private ArrayList<Message> inbox;
 
+    private ArrayList<Message> timeline;
+
     /**
      * Constructs a User object with the provided login, password, and name.
      *
@@ -52,17 +54,20 @@ public class User {
             @JsonProperty("name") String name,
             @JsonProperty("attributes") ArrayList<UserAttribute> attributes,
             @JsonProperty("friends") ArrayList<String> friends,
-            @JsonProperty("inbox") ArrayList<Message> inbox)
-    {
+            @JsonProperty("inbox") ArrayList<Message> inbox,
+            @JsonProperty("timeline") ArrayList<Message> timeline) {
+
         this.login = username;
         this.password = password;
         this.name = name;
-        if(attributes != null) this.attributes = attributes;
+        if (attributes != null) this.attributes = attributes;
         else this.attributes = new ArrayList<>();
-        if(friends != null) this.friends = friends;
+        if (friends != null) this.friends = friends;
         else this.friends = new ArrayList<>();
-        if(inbox != null) this.inbox = inbox;
+        if (inbox != null) this.inbox = inbox;
         else this.inbox = new ArrayList<>();
+        if (timeline != null) this.timeline = timeline;
+        else this.timeline = new ArrayList<>();
     }
 
     /**
@@ -201,7 +206,7 @@ public class User {
      */
 
     public String readMessage() {
-        if(inbox.isEmpty()) throw new RuntimeException("Não há recados.");
+        if (inbox.isEmpty()) throw new RuntimeException("Não há recados.");
         Message message = inbox.get(0);
         inbox.remove(0);
         return message.message();
@@ -209,5 +214,16 @@ public class User {
 
     public ArrayList<Message> getInbox() {
         return inbox;
+    }
+
+    public void getPost(Message message) {
+        timeline.add(message);
+    }
+
+    public String readPost() {
+        if (timeline.isEmpty()) throw new RuntimeException("Não há mensagens.");
+        Message message = timeline.get(0);
+        timeline.remove(0);
+        return message.message();
     }
 }
