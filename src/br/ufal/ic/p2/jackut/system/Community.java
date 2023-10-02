@@ -10,19 +10,23 @@ public class Community {
     private final String name;
     private final String description;
     private final String owner;
-    private final ArrayList<String> members = new ArrayList<>();
+    private ArrayList<String> members;
+    private ArrayList<Message> inbox;
 
     @JsonCreator
     public Community(
             @JsonProperty("name") String name,
             @JsonProperty("description") String description,
             @JsonProperty("owner") String owner,
-            @JsonProperty("members") ArrayList<String> members) {
+            @JsonProperty("members") ArrayList<String> members,
+            @JsonProperty("inbox") ArrayList<Message> inbox) {
 
         this.owner = owner;
         this.name = name;
         this.description = description;
-        this.members.addAll(members);
+        this.members = members;
+        this.inbox = inbox;
+
     }
 
     public String getName() {
@@ -44,7 +48,6 @@ public class Community {
     public String membersToString() {
         StringBuilder sb = new StringBuilder();
         sb.append('{');
-        sb.append(this.owner).append(",");
         for (String member : this.members) {
             sb.append(member).append(",");
         }
@@ -54,8 +57,26 @@ public class Community {
     }
 
     public void addMember(String login) {
-        if(!this.members.contains(login)) {
+        if (!this.members.contains(login)) {
             this.members.add(login);
-        } else throw new CommunityException("Usuário já é membro da comunidade");
+        } else throw new CommunityException("Usuario já faz parte dessa comunidade.");
+    }
+
+    public void addMessage(Message message) {
+        this.inbox.add(message);
+    }
+
+    public String readMessage() {
+        if (!this.inbox.isEmpty()) {
+            String message = this.inbox.get(0).message();
+            this.inbox.remove(0);
+            return message;
+        } else {
+            throw new CommunityException("Não há mensagens.");
+        }
+    }
+
+    public boolean hasMember(String login) {
+        return this.members.contains(login);
     }
 }

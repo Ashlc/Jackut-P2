@@ -1,8 +1,6 @@
 package br.ufal.ic.p2.jackut.system;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -206,7 +204,7 @@ public class User {
         if(inbox.isEmpty()) throw new RuntimeException("Não há recados.");
         Message message = inbox.get(0);
         inbox.remove(0);
-        return message.getMessage();
+        return message.message();
     }
 
     public ArrayList<Message> getInbox() {

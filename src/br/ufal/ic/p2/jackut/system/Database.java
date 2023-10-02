@@ -7,6 +7,7 @@ import java.util.*;
 
 import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.databind.*;
+
 /**
  * This class represents a simple database system for managing user accounts and sessions.
  * It provides methods for creating, finding, and managing user accounts, as well as handling
@@ -14,12 +15,11 @@ import com.fasterxml.jackson.databind.*;
  */
 
 public class Database {
+    ObjectMapper objectMapper = new ObjectMapper();
     private ArrayList<User> users;
     private ArrayList<Session> sessions;
     //    private ArrayList<Comunity> comunities;
     private HashMap<String, Community> communities = new HashMap<>();
-
-    ObjectMapper objectMapper = new ObjectMapper();
 
     /**
      * Constructs a Database object with initial user data imported from a file.
@@ -38,20 +38,6 @@ public class Database {
         }
     }
 
-    public void shutdown() {
-        usersToJSON();
-        communitiesToJSON();
-//        exportUsers();
-    }
-
-    public void usersToJSON() {
-        try {
-            objectMapper.writeValue(new File("users.json"), users);
-        } catch (IOException e) {
-            throw new JsonException("Erro ao escrever arquivo de usuários.");
-        }
-    }
-
     public void usersFromJSON() {
         File json = new File("users.json");
         if (json.exists()) {
@@ -64,14 +50,6 @@ public class Database {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        }
-    }
-
-    public void communitiesToJSON() {
-        try {
-            objectMapper.writeValue(new File("communities.json"), communities);
-        } catch (IOException e) {
-            throw new JsonException("Erro ao escrever arquivo de comunidades.");
         }
     }
 
@@ -90,17 +68,42 @@ public class Database {
         }
     }
 
+    public void shutdown() {
+        usersToJSON();
+        communitiesToJSON();
+//        exportUsers();
+    }
+
+    public void usersToJSON() {
+        try {
+            objectMapper.writeValue(new File("users.json"), users);
+        } catch (IOException e) {
+            throw new JsonException("Erro ao escrever arquivo de usuários.");
+        }
+    }
+
+    public void communitiesToJSON() {
+        try {
+            objectMapper.writeValue(new File("communities.json"), communities);
+        } catch (IOException e) {
+            throw new JsonException("Erro ao escrever arquivo de comunidades.");
+        }
+    }
+
     /**
      * Flushes all user and session data from the database.
      */
 
     public void flush() {
         this.users = new ArrayList<>();
+        this.communities = new HashMap<>();
         this.sessions = new ArrayList<>();
         if (new File("users.json").exists()) {
+            System.out.println("users.json exists");
             new File("users.json").delete();
         }
         if (new File("communities.json").exists()) {
+            System.out.println("communities.json exists");
             new File("communities.json").delete();
         }
         System.out.println("Flushed data.");
@@ -135,23 +138,6 @@ public class Database {
     }
 
     /**
-     * Finds a user by their login.
-     *
-     * @param login The login of the user to find.
-     * @return The User object matching the login.
-     * @throws RuntimeException if no user with the given login is found.
-     */
-
-    public User findUser(String login) {
-        for (User user : this.users) { // for each user in users
-            if (user.getLogin().equals(login)) { // if user login is equal to login
-                return user;
-            }
-        }
-        throw new UserException("Usuário não cadastrado."); // if user not found
-    }
-
-    /**
      * Starts a new session for a user with the provided login and password.
      *
      * @param login    The login of the user to start a session for.
@@ -174,6 +160,23 @@ public class Database {
         } catch (RuntimeException error) {
             throw new UserException("Login ou senha inválidos."); // if user not found
         }
+    }
+
+    /**
+     * Finds a user by their login.
+     *
+     * @param login The login of the user to find.
+     * @return The User object matching the login.
+     * @throws RuntimeException if no user with the given login is found.
+     */
+
+    public User findUser(String login) {
+        for (User user : this.users) { // for each user in users
+            if (user.getLogin().equals(login)) { // if user login is equal to login
+                return user;
+            }
+        }
+        throw new UserException("Usuário não cadastrado."); // if user not found
     }
 
     /**
@@ -215,24 +218,6 @@ public class Database {
     }
 
     /**
-     * Finds a session by its ID.
-     *
-     * @param sessionId The ID of the session to find.
-     * @return The Session object matching the ID.
-     * @throws RuntimeException if no session with the given ID is found.
-     */
-
-    public Session findSession(String sessionId) {
-        for (Session session : this.sessions) { // for each session in sessions
-            if (Objects.equals(session.sessionId(), sessionId)) { // if session id is equal to sessionId
-                return session;
-            }
-        }
-
-        throw new UserException("Usuário não cadastrado."); // if session not found
-    }
-
-    /**
      * Finds a user by their session ID.
      *
      * @param sessionId The ID of the session to find the user for.
@@ -249,6 +234,24 @@ public class Database {
         }
 
         return user;
+    }
+
+    /**
+     * Finds a session by its ID.
+     *
+     * @param sessionId The ID of the session to find.
+     * @return The Session object matching the ID.
+     * @throws RuntimeException if no session with the given ID is found.
+     */
+
+    public Session findSession(String sessionId) {
+        for (Session session : this.sessions) { // for each session in sessions
+            if (Objects.equals(session.sessionId(), sessionId)) { // if session id is equal to sessionId
+                return session;
+            }
+        }
+
+        throw new UserException("Usuário não cadastrado."); // if session not found
     }
 
     /**
@@ -332,7 +335,7 @@ public class Database {
         User recipientUser = findUser(recipient);
         if (sender.equals(recipientUser)) throw new MessageException("Usuário não pode enviar recado para si mesmo.");
         if (recipientUser != null) {
-            recipientUser.addMessage(new Message(sender.getLogin(), recipient, message));
+            recipientUser.addMessage(new Message(sender.getLogin(), message));
         }
     }
 
@@ -352,13 +355,46 @@ public class Database {
         return null;
     }
 
+    public void sendCommunityMessage(String sessionId, String communityName, String message) {
+        User sender = getUserBySessionId(sessionId);
+        String login = sender.getLogin();
+        System.out.println(login);
+        Community community = communities.get(communityName);
+
+        if (community == null) {
+            throw new CommunityException("Comunidade não existe.");
+        }
+
+        if (!community.hasMember(login)) {
+            throw new CommunityException("Usuário não faz parte dessa comunidade.");
+        }
+
+        community.addMessage(new Message(sender.getLogin(), message));
+    }
+
+    public String readCommunityMessage(String sessionId) {
+        User user = getUserBySessionId(sessionId);
+        String login = user.getLogin();
+        if (user != null) {
+            for (Community community : communities.values()) {
+                if (community.hasMember(login)) {
+                    return community.readMessage();
+                }
+            }
+        }
+        return null;
+    }
+
     public void createComunity(String session, String name, String description) {
         String login = getUserBySessionId(session).getLogin();
         if (communities.containsKey(name)) {
             throw new CommunityException("Comunidade com esse nome já existe.");
         }
 
-        Community community = new Community(name, description, login, new ArrayList<>());
+        ArrayList<String> members = new ArrayList<>();
+        members.add(login);
+
+        Community community = new Community(name, description, login, members, new ArrayList<Message>());
         communities.put(name, community);
 
     }
@@ -388,5 +424,34 @@ public class Database {
         } else {
             throw new CommunityException("Comunidade não existe.");
         }
+    }
+
+    public void addToCommunity(String session, String name) {
+        String member = getUserBySessionId(session).getLogin();
+        if (communities.containsKey(name)) {
+            Community community = communities.get(name);
+            community.addMember(member);
+        } else {
+            throw new CommunityException("Comunidade não existe.");
+        }
+    }
+
+    public String getUserCommunities(String login) {
+        findUser(login);
+        StringBuilder sb = new StringBuilder();
+        sb.append('{');
+        for (Community community : communities.values()) {
+            if (community.hasMember(login)) {
+                sb.append(community.getName());
+                sb.append(",");
+            }
+        }
+        if (sb.length() > 1) {
+            sb.deleteCharAt(sb.length() - 1);
+        }
+
+        sb.append('}');
+        System.out.println(sb.toString());
+        return sb.toString();
     }
 }

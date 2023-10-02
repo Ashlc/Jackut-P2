@@ -1,4 +1,5 @@
 package br.ufal.ic.p2.jackut.facades;
+
 import br.ufal.ic.p2.jackut.system.Database;
 import br.ufal.ic.p2.jackut.system.Session;
 
@@ -15,37 +16,39 @@ public class Facade {
         DB.newUser(login, senha, nome);
     }
 
-    public String abrirSessao (String login, String senha) {
+    public String abrirSessao(String login, String senha) {
         return DB.startSession(login, senha);
     }
 
-    public String getAtributoUsuario (String login, String atributo) {
+    public String getAtributoUsuario(String login, String atributo) {
         return DB.getUserAttribute(login, atributo);
-       //usuarioTeste.getAtributoUsuario(usuarioTeste.getNome());
     }
 
-    public void editarPerfil (String id, String atributo, String valor) {
+    public void editarPerfil(String id, String atributo, String valor) {
         DB.editProfile(id, atributo, valor);
     }
 
-    public void adicionarAmigo (String id, String amigo) {
+    public void adicionarAmigo(String id, String amigo) {
         DB.addFriend(id, amigo);
     }
 
-    public boolean ehAmigo (String login, String amigo) {
+    public boolean ehAmigo(String login, String amigo) {
         return DB.areFriends(login, amigo);
     }
-    public String getAmigos (String login) {
+
+    public String getAmigos(String login) {
         return DB.getFriends(login);
     }
-    public void enviarRecado (String id, String destinatario, String mensagem) {
+
+    public void enviarRecado(String id, String destinatario, String mensagem) {
         DB.sendMessage(id, destinatario, mensagem);
     }
-    public String lerRecado (String id) {
+
+    public String lerRecado(String id) {
         return DB.readMessage(id);
     }
 
-    public void encerrarSistema () {
+    public void encerrarSistema() {
         DB.shutdown();
         //Grava o cadastro em arquivo e encerra o programa.
         // Atingir o final de um script (final de arquivo) é equivalente a encontrar este comando.
@@ -65,5 +68,21 @@ public class Facade {
 
     public String getMembrosComunidade(String nome) {
         return DB.getCommunityMembers(nome);
+    }
+
+    public void adicionarComunidade(String sessao, String nome) {
+        DB.addToCommunity(sessao, nome);
+    }
+
+    public String getComunidades(String login) {
+        return DB.getUserCommunities(login);
+    }
+
+    public void enviarMensagem(String sessao, String comunidade, String mensagem) {
+        DB.sendCommunityMessage(sessao, comunidade, mensagem);
+    }
+
+    public String lerMensagem(String sessao) {
+        return DB.readCommunityMessage(sessao);
     }
 }
