@@ -1,16 +1,19 @@
 package br.ufal.ic.p2.jackut.system;
 
-import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * This class represents a user account in the system.
  * It contains the user's login name, password, and name.
  */
 
-public class User implements Serializable {
+public class User {
     /**
      * The login name of the user.
      */
@@ -26,7 +29,7 @@ public class User implements Serializable {
     /**
      * The user's attributes.
      */
-    private final ArrayList<HashMap<String, String>> attributes;
+    private final ArrayList<UserAttribute> attributes;
     /**
      * The user's friends.
      */
@@ -44,14 +47,15 @@ public class User implements Serializable {
      * @param name     The name of the new user.
      */
 
+    @JsonCreator
     public User(
-            String username,
-            String password,
-            String name,
-            ArrayList<HashMap<String, String>> attributes,
-            ArrayList<String> friends,
-            ArrayList<Message> inbox){
-
+            @JsonProperty("username") String username,
+            @JsonProperty("password") String password,
+            @JsonProperty("name") String name,
+            @JsonProperty("attributes") ArrayList<UserAttribute> attributes,
+            @JsonProperty("friends") ArrayList<String> friends,
+            @JsonProperty("inbox") ArrayList<Message> inbox)
+    {
         this.login = username;
         this.password = password;
         this.name = name;
@@ -112,10 +116,7 @@ public class User implements Serializable {
      */
 
     public void addAttribute(String attribute, String value) {
-        attributes.add(
-                new HashMap<String, String>() {{
-                put(attribute, value);
-        }});
+        attributes.add(new UserAttribute(attribute, value));
     }
 
     /**
@@ -126,14 +127,13 @@ public class User implements Serializable {
      */
 
     public void editAttribute(String attribute, String value) {
-
-        for(HashMap<String, String> map : attributes) {
-            if(map.containsKey(attribute)) {
-                map.replace(attribute, value);
+        for (UserAttribute userAttribute : attributes) {
+            if (userAttribute.getName().equals(attribute)) {
+                userAttribute.setValue(value);
                 return;
             }
         }
-        throw new RuntimeException("Atributo não preenchido.");
+        addAttribute(attribute, value);
     }
 
     /**
@@ -142,7 +142,7 @@ public class User implements Serializable {
      * @return The value of the provided attribute.
      */
 
-    public ArrayList<HashMap<String,String>> getAttributes() {
+    public ArrayList<UserAttribute> getAttributes() {
         return attributes;
     }
 
@@ -150,7 +150,7 @@ public class User implements Serializable {
      * Exports attributes to be saved in a file.
      */
 
-    public ArrayList<HashMap<String, String>> exportAttributes() {
+    public ArrayList<UserAttribute> exportAttributes() {
         return attributes;
     }
 
@@ -207,5 +207,9 @@ public class User implements Serializable {
         Message message = inbox.get(0);
         inbox.remove(0);
         return message.getMessage();
+    }
+
+    public ArrayList<Message> getInbox() {
+        return inbox;
     }
 }

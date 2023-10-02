@@ -1,12 +1,16 @@
 package br.ufal.ic.p2.jackut.system;
 
-import java.io.Serializable;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class UserAttribute implements Serializable {
-    private String name;
+public class UserAttribute {
+    private final String name;
     private String value;
 
-    public UserAttribute(String name, String value) {
+    @JsonCreator
+    public UserAttribute(
+            @JsonProperty("name") String name,
+            @JsonProperty("value") String value) {
         this.name = name;
         this.value = value;
     }
@@ -14,7 +18,7 @@ public class UserAttribute implements Serializable {
     public String getValue() {
         return value;
     }
-    public String getAttributeName() {
+    public String getName() {
         return name;
     }
 

@@ -7,10 +7,10 @@ public class Main {
 //                "tests/us2_1.txt",
 //                "tests/us2_2.txt",
 //                "tests/us3_1.txt",
-                "tests/us3_2.txt",
+//                "tests/us3_2.txt",
 //                "tests/us4_1.txt",
 //                "tests/us4_2.txt"
-//                "tests/us5_1.txt",
+                "tests/us5_1.txt",
 //                "tests/us5_2.txt",
 //                "tests/us6_1.txt",
 //                "tests/us6_2.txt",

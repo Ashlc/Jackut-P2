@@ -8,7 +8,6 @@ public class Facade {
     private Database DB = new Database();
 
     public void zerarSistema() {
-        DB.deleteData();
         DB.flush();
     }
 
@@ -48,7 +47,6 @@ public class Facade {
 
     public void encerrarSistema () {
         DB.shutdown();
-        DB = new Database();
         //Grava o cadastro em arquivo e encerra o programa.
         // Atingir o final de um script (final de arquivo) é equivalente a encontrar este comando.
     }
@@ -66,8 +64,6 @@ public class Facade {
     }
 
     public String getMembrosComunidade(String nome) {
-        ArrayList<String> members = DB.getCommunityMembers(nome);
-        members.toString();
-        return "{" + String.join(",", members) + "}";
+        return DB.getCommunityMembers(nome);
     }
 }

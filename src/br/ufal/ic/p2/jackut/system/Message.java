@@ -4,7 +4,8 @@ package br.ufal.ic.p2.jackut.system;
  * This class represents a message in the system.
  * It contains the sender, recipient, and message.
  */
-
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 public class Message {
     /**
      * The sender of the message.
@@ -19,7 +20,11 @@ public class Message {
      */
     private final String message;
 
-    public Message(String sender, String recipient, String message) {
+    @JsonCreator
+    public Message(
+            @JsonProperty("sender")String sender,
+            @JsonProperty("recipient")String recipient,
+            @JsonProperty("message") String message) {
 
         this.sender = sender;
         this.recipient = recipient;
