@@ -1,7 +1,6 @@
 package br.ufal.ic.p2.jackut.system;
 
-import br.ufal.ic.p2.jackut.exceptions.CommunityCreationException;
-import br.ufal.ic.p2.jackut.exceptions.UserCreationException;
+import br.ufal.ic.p2.jackut.exceptions.*;
 
 import java.io.*;
 import java.util.*;
@@ -49,7 +48,7 @@ public class Database {
         try {
             objectMapper.writeValue(new File("users.json"), users);
         } catch (IOException e) {
-            throw new RuntimeException("Erro ao escrever arquivo de usuários.");
+            throw new JsonException("Erro ao escrever arquivo de usuários.");
         }
     }
 
@@ -72,7 +71,7 @@ public class Database {
         try {
             objectMapper.writeValue(new File("communities.json"), communities);
         } catch (IOException e) {
-            throw new RuntimeException("Erro ao escrever arquivo de comunidades.");
+            throw new JsonException("Erro ao escrever arquivo de comunidades.");
         }
     }
 
@@ -113,21 +112,21 @@ public class Database {
      * @param login    The login name for the new user.
      * @param password The password for the new user.
      * @param name     The name of the new user.
-     * @throws UserCreationException if the login or password is invalid or if an account with the same login already exists.
+     * @throws UserException if the login or password is invalid or if an account with the same login already exists.
      */
 
     public void newUser(String login, String password, String name) {
         if (login == null) {
-            throw new UserCreationException("Login inválido.");
+            throw new UserException("Login inválido.");
         }
 
         if (password == null) {
-            throw new UserCreationException("Senha inválida.");
+            throw new UserException("Senha inválida.");
         }
 
         for (User user : this.users) {
             if (user.getLogin().equals(login)) {
-                throw new UserCreationException("Conta com esse nome já existe.");
+                throw new UserException("Conta com esse nome já existe.");
             }
         }
 
@@ -149,7 +148,7 @@ public class Database {
                 return user;
             }
         }
-        throw new RuntimeException("Usuário não cadastrado."); // if user not found
+        throw new UserException("Usuário não cadastrado."); // if user not found
     }
 
     /**
@@ -170,10 +169,10 @@ public class Database {
                 sessions.add(new Session(user, id)); // add new session to sessions
                 return id;
             } else {
-                throw new RuntimeException("Login ou senha inválidos."); // if user password is not equal to password
+                throw new UserException("Login ou senha inválidos."); // if user password is not equal to password
             }
         } catch (RuntimeException error) {
-            throw new RuntimeException("Login ou senha inválidos."); // if user not found
+            throw new UserException("Login ou senha inválidos."); // if user not found
         }
     }
 
@@ -191,7 +190,7 @@ public class Database {
             return user.getName();
         }
 
-        if (user.getAttributes().isEmpty()) throw new RuntimeException("Atributo não preenchido.");
+        if (user.getAttributes().isEmpty()) throw new AttributeException("Atributo não preenchido.");
 
         for (UserAttribute userAttribute : user.getAttributes()) {
             if (userAttribute.getName().equals(attribute)) {
@@ -199,7 +198,7 @@ public class Database {
             }
         }
 
-        throw new RuntimeException("Atributo não preenchido.");
+        throw new AttributeException("Atributo não preenchido.");
     }
 
     /**
@@ -230,7 +229,7 @@ public class Database {
             }
         }
 
-        throw new RuntimeException("Usuário não cadastrado."); // if session not found
+        throw new UserException("Usuário não cadastrado."); // if session not found
     }
 
     /**
@@ -246,7 +245,7 @@ public class Database {
         User user = session.user();
 
         if (user == null) {
-            throw new RuntimeException("Usuário não cadastrado.");
+            throw new UserException("Usuário não cadastrado.");
         }
 
         return user;
@@ -264,14 +263,14 @@ public class Database {
         User user = getUserBySessionId(sessionId);
         User friend = findUser(friendLogin);
         if (user.equals(friend)) {
-            throw new RuntimeException("Usuário não pode adicionar a si mesmo como amigo.");
+            throw new UserException("Usuário não pode adicionar a si mesmo como amigo.");
         }
         if (user.getFriends().contains(friend.getLogin()) && !friend.getFriends().contains(user.getLogin())) {
-            throw new RuntimeException("Usuário já está adicionado como amigo, esperando aceitação do convite.");
+            throw new UserException("Usuário já está adicionado como amigo, esperando aceitação do convite.");
         }
 
         if (user.getFriends().contains(friend.getLogin()) && friend.getFriends().contains(user.getLogin())) {
-            throw new RuntimeException("Usuário já está adicionado como amigo.");
+            throw new UserException("Usuário já está adicionado como amigo.");
         }
         user.addFriend(friend.getLogin());
     }
@@ -331,7 +330,7 @@ public class Database {
     public void sendMessage(String sessionId, String recipient, String message) {
         User sender = getUserBySessionId(sessionId);
         User recipientUser = findUser(recipient);
-        if (sender.equals(recipientUser)) throw new RuntimeException("Usuário não pode enviar recado para si mesmo.");
+        if (sender.equals(recipientUser)) throw new MessageException("Usuário não pode enviar recado para si mesmo.");
         if (recipientUser != null) {
             recipientUser.addMessage(new Message(sender.getLogin(), recipient, message));
         }
@@ -356,7 +355,7 @@ public class Database {
     public void createComunity(String session, String name, String description) {
         String login = getUserBySessionId(session).getLogin();
         if (communities.containsKey(name)) {
-            throw new CommunityCreationException("Comunidade com esse nome já existe.");
+            throw new CommunityException("Comunidade com esse nome já existe.");
         }
 
         Community community = new Community(name, description, login, new ArrayList<>());
@@ -368,7 +367,7 @@ public class Database {
         if (communities.containsKey(name)) {
             return communities.get(name).getDescription();
         } else {
-            throw new CommunityCreationException("Comunidade não existe.");
+            throw new CommunityException("Comunidade não existe.");
         }
     }
 
@@ -376,7 +375,7 @@ public class Database {
         if (communities.containsKey(name)) {
             return communities.get(name).getOwner();
         } else {
-            throw new CommunityCreationException("Comunidade não existe.");
+            throw new CommunityException("Comunidade não existe.");
         }
     }
 
@@ -387,7 +386,7 @@ public class Database {
             return community.membersToString();
 
         } else {
-            throw new CommunityCreationException("Comunidade não existe.");
+            throw new CommunityException("Comunidade não existe.");
         }
     }
 }

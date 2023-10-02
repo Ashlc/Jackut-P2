@@ -1,5 +1,6 @@
 package br.ufal.ic.p2.jackut.system;
 
+import br.ufal.ic.p2.jackut.exceptions.CommunityException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -22,7 +23,6 @@ public class Community {
         this.name = name;
         this.description = description;
         this.members.addAll(members);
-        this.members.add(owner);
     }
 
     public String getName() {
@@ -44,8 +44,8 @@ public class Community {
     public String membersToString() {
         StringBuilder sb = new StringBuilder();
         sb.append('{');
+        sb.append(this.owner).append(",");
         for (String member : this.members) {
-            System.out.println(member);
             sb.append(member).append(",");
         }
         sb.deleteCharAt(sb.length() - 1);
@@ -54,6 +54,8 @@ public class Community {
     }
 
     public void addMember(String login) {
-        this.members.add(login);
+        if(!this.members.contains(login)) {
+            this.members.add(login);
+        } else throw new CommunityException("Usuário já é membro da comunidade");
     }
 }
