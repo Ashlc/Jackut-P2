@@ -359,27 +359,31 @@ public class Database {
         User sender = getUserBySessionId(sessionId);
         String login = sender.getLogin();
         System.out.println(login);
-        Community community = communities.get(communityName);
+        Community community = getCommunity(communityName);
 
-        if (community == null) {
-            throw new CommunityException("Comunidade não existe.");
-        }
-
-        if (!community.hasMember(login)) {
+        if (community.hasMember(login)) {
+            community.addMessage(new Message(sender.getLogin(), message));
+            System.out.println("Mensagem enviada.");
+        } else if (!community.hasMember(login)) {
             throw new CommunityException("Usuário não faz parte dessa comunidade.");
         }
 
-        community.addMessage(new Message(sender.getLogin(), message));
+    }
+
+    public Community getCommunity(String name) {
+        if (communities.containsKey(name)) {
+            return communities.get(name);
+        } else {
+            throw new CommunityException("Comunidade não existe.");
+        }
     }
 
     public String readCommunityMessage(String sessionId) {
         User user = getUserBySessionId(sessionId);
         String login = user.getLogin();
-        if (user != null) {
-            for (Community community : communities.values()) {
-                if (community.hasMember(login)) {
-                    return community.readMessage();
-                }
+        for (Community community : communities.values()) {
+            if (community.hasMember(login)) {
+                return community.readMessage();
             }
         }
         return null;
