@@ -3,6 +3,10 @@ package br.ufal.ic.p2.jackut.system;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * Represents a user attribute.
+ */
+
 public class UserAttribute {
     private final String name;
     private String value;

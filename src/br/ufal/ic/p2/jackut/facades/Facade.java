@@ -85,4 +85,36 @@ public class Facade {
     public String lerMensagem(String sessao) {
         return DB.readPosts(sessao);
     }
+
+    public boolean ehFa(String login, String idolo) {
+        return DB.isFan(login, idolo);
+    }
+
+    public void adicionarIdolo(String sessao, String idolo) {
+        DB.addIdol(sessao, idolo);
+    }
+
+    public String getFas (String login) {
+        return DB.getFans(login);
+    }
+
+    public void adicionarPaquera(String sessao, String paquera) {
+        DB.addFlirt(sessao, paquera);
+    }
+
+    public boolean ehPaquera(String login, String paquera) {
+        return DB.isFlirt(login, paquera);
+    }
+
+    public String getPaqueras(String login) {
+        return DB.getFlirts(login);
+    }
+
+    public void adicionarInimigo(String sessao, String inimigo) {
+        DB.addEnemy(sessao, inimigo);
+    }
+
+    public void removerUsuario(String sessao) {
+        DB.deleteAccount(sessao);
+    }
 }
