@@ -3,13 +3,25 @@ package br.ufal.ic.p2.jackut.system;
 import java.util.ArrayList;
 import java.util.Objects;
 
+import br.ufal.ic.p2.jackut.exceptions.AttributeException;
+import br.ufal.ic.p2.jackut.exceptions.MessageException;
+import br.ufal.ic.p2.jackut.exceptions.RelationshipException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 
 /**
  * This class represents a user account in the system.
  * It contains the user's login name, password, and name.
  */
+
+@JsonIdentityInfo(
+        generator = ObjectIdGenerators.UUIDGenerator.class,
+        property = "@json_id"
+)
 
 public class User {
     /**
@@ -31,7 +43,7 @@ public class User {
     /**
      * The user's friends.
      */
-    private final ArrayList<String> friends;
+    private final UserList friends;
     /**
      * The user's inbox.
      */
@@ -47,22 +59,25 @@ public class User {
      * The user's fans.
      */
 
-    private ArrayList<String> fans;
+    @JsonManagedReference
+    private final UserList fans;
 
     /**
      * The user's idols.
      */
-    private ArrayList<String> idols = new ArrayList<>();
+    private final UserList idols;
 
     /**
      * The user's flirts.
      */
-    private ArrayList<String> flirts = new ArrayList<>();
+    private final UserList flirts;
 
     /**
      * The user's enemies.
      */
-    private ArrayList<String> enemies = new ArrayList<>();
+    private final UserList enemies;
+
+    private ArrayList<Community> communities = new ArrayList<>();
 
     /**
      * Constructs a User object with the provided login, password, and name.
@@ -78,25 +93,26 @@ public class User {
             @JsonProperty("password") String password,
             @JsonProperty("name") String name,
             @JsonProperty("attributes") ArrayList<UserAttribute> attributes,
-            @JsonProperty("friends") ArrayList<String> friends,
+            @JsonProperty("friends") UserList friends,
             @JsonProperty("inbox") ArrayList<Message> inbox,
             @JsonProperty("timeline") ArrayList<Message> timeline,
-            @JsonProperty("fans") ArrayList<String> fans,
-            @JsonProperty("idols") ArrayList<String> idols,
-            @JsonProperty("flirts") ArrayList<String> flirts,
-            @JsonProperty("enemies") ArrayList<String> enemies)
-    {
+            @JsonProperty("fans") UserList fans,
+            @JsonProperty("idols") UserList idols,
+            @JsonProperty("flirts") UserList flirts,
+            @JsonProperty("enemies") UserList enemies,
+            @JsonProperty("communities") ArrayList<Community> communities) {
         this.login = username;
         this.password = password;
         this.name = name;
         this.attributes = attributes != null ? attributes : new ArrayList<>();
-        this.friends = friends != null ? friends : new ArrayList<>();
-        this.inbox = inbox != null ? inbox : new ArrayList<>();
+        this.friends = friends != null ? friends : new UserList();
+        this.inbox = inbox != null ? inbox : new ArrayList<Message>();
         this.timeline = timeline != null ? timeline : new ArrayList<>();
-        this.fans = fans != null ? fans : new ArrayList<>();
-        this.idols = idols != null ? idols : new ArrayList<>();
-        this.flirts = flirts != null ? flirts : new ArrayList<>();
-        this.enemies = enemies != null ? enemies : new ArrayList<>();
+        this.fans = fans != null ? fans : new UserList();
+        this.idols = idols != null ? idols : new UserList();
+        this.flirts = flirts != null ? flirts : new UserList();
+        this.enemies = enemies != null ? enemies : new UserList();
+        this.communities = communities != null ? communities : new ArrayList<>();
     }
 
     /**
@@ -178,6 +194,19 @@ public class User {
         return attributes;
     }
 
+    public String getAttribueValue(String attribute) {
+        if(attribute.equals("nome")) return name;
+        if((attributes.isEmpty())) throw new AttributeException("Atributo não preenchido.");
+
+        for (UserAttribute userAttribute : attributes) {
+            if (userAttribute.getName().equals(attribute)) {
+                return userAttribute.getValue();
+            }
+        }
+
+        throw new AttributeException("Atributo não preenchido.");
+    }
+
     /**
      * Exports attributes to be saved in a file.
      */
@@ -189,11 +218,18 @@ public class User {
     /**
      * Adds a friend to the user's friend list.
      *
-     * @param friend The user to be added.
+     * @param user The user to be added.
      */
 
-    public void addFriend(String friend) {
-        friends.add(friend);
+    public void addFriend(User user) {
+        if (friends.contains(user) && user.hasOnFriendList(this))
+            throw new RelationshipException("Usuário já está adicionado como amigo.");
+        if (friends.contains(user) && !user.hasOnFriendList(this))
+            throw new RelationshipException("Usuário já está adicionado como amigo, esperando aceitação do convite.");
+        if (user.equals(this)) throw new RelationshipException("Usuário não pode adicionar a si mesmo como amigo.");
+        if (enemies.contains(user) || user.isEnemyOf(user))
+            throw new RelationshipException("Função inválida: " + user.getName() + " é seu inimigo.");
+        friends.add(user);
     }
 
     /**
@@ -202,19 +238,27 @@ public class User {
      * @return A list of the user's friends.
      */
 
-    public ArrayList<String> getFriends() {
+    public UserList getFriends() {
         return friends;
+    }
+
+    public String printFriends() {
+        return friends.printAll();
     }
 
     /**
      * Returns true if the provided user is a friend of this user.
      *
-     * @param friend The user to be checked.
+     * @param user The user to be checked.
      * @return True if the provided user is a friend of this user.
      */
 
-    public boolean isFriend(String friend) {
-        return friends.contains(friend);
+    public boolean hasOnFriendList(User user) {
+        return friends.contains(user);
+    }
+
+    public boolean isFriendOf(User user) {
+        return friends.contains(user) && user.hasOnFriendList(this);
     }
 
     /**
@@ -223,7 +267,9 @@ public class User {
      * @param message The message to be added.
      */
 
-    public void addMessage(Message message) {
+    public void addMessage(UserMessage message) {
+        if(enemies.contains(message.sender()) || message.sender().isEnemyOf(this)) throw new RelationshipException("Função inválida: " + name + " é seu inimigo.");
+        if(message.sender().equals(this)) throw new RuntimeException("Usuário não pode enviar recado para si mesmo.");
         inbox.add(message);
     }
 
@@ -235,7 +281,7 @@ public class User {
      */
 
     public String readMessage() {
-        if (inbox.isEmpty()) throw new RuntimeException("Não há recados.");
+        if (inbox.isEmpty()) throw new MessageException("Não há recados.");
         Message message = inbox.get(0);
         inbox.remove(0);
         return message.message();
@@ -293,7 +339,7 @@ public class User {
      * @param fan The user to be added.
      */
 
-    public void addFan(String fan) {
+    public void addFan(User fan) {
         fans.add(fan);
     }
 
@@ -303,8 +349,12 @@ public class User {
      * @return A list of the user's fans.
      */
 
-    public ArrayList<String> getFans() {
+    public UserList getFans() {
         return fans;
+    }
+
+    public String printFans() {
+        return fans.printAll();
     }
 
     /**
@@ -314,7 +364,7 @@ public class User {
      * @return True if the provided user is a fan of this user.
      */
 
-    public boolean isFanOf(String idol) {
+    public boolean isFanOf(User idol) {
         return this.idols.contains(idol);
     }
 
@@ -324,8 +374,12 @@ public class User {
      * @param idol The user to be added.
      */
 
-    public void addIdol(String idol) {
+    public void addIdol(User idol) {
+        if(idol.equals(this)) throw new RelationshipException("Usuário não pode ser ídolo de si mesmo.");
+        if(idols.contains(idol)) throw new RelationshipException("Usuário já está adicionado como ídolo.");
+        if(enemies.contains(idol) || idol.isEnemyOf(this)) throw new RelationshipException("Função inválida: " + idol.getName() + " é seu inimigo.");
         idols.add(idol);
+        idol.addFan(this);
     }
 
     /**
@@ -334,7 +388,7 @@ public class User {
      * @return A list of the user's idols.
      */
 
-    public ArrayList<String> getIdols() {
+    public UserList getIdols() {
         return idols;
     }
 
@@ -344,8 +398,16 @@ public class User {
      * @param flirt The user to be added.
      */
 
-    public void addFlirt(String flirt) {
+    public void addFlirt(User flirt) {
+        if(flirt.equals(this)) throw new RelationshipException("Usuário não pode ser paquera de si mesmo.");
+        if(flirts.contains(flirt)) throw new RelationshipException("Usuário já está adicionado como paquera.");
+        if(enemies.contains(flirt) || flirt.isEnemyOf(this)) throw new RelationshipException("Função inválida: " + flirt.getName() + " é seu inimigo.");
         flirts.add(flirt);
+        if(flirt.hasFlirt(this)) {
+            inbox.add(
+                    new SystemMessage(flirt.getName() + " é seu paquera - Recado do Jackut.")
+            );
+        }
     }
 
     /**
@@ -354,8 +416,12 @@ public class User {
      * @return A list of the user's flirts.
      */
 
-    public ArrayList<String> getFlirts() {
+    public UserList getFlirts() {
         return flirts;
+    }
+
+    public String printFlirts() {
+        return flirts.printAll();
     }
 
     /**
@@ -365,7 +431,7 @@ public class User {
      * @return True if the provided user is a flirt of this user.
      */
 
-    public boolean hasFlirt(String flirt) {
+    public boolean hasFlirt(User flirt) {
         return this.flirts.contains(flirt);
     }
 
@@ -375,7 +441,9 @@ public class User {
      * @param enemy The user to be added.
      */
 
-    public void addEnemy(String enemy) {
+    public void addEnemy(User enemy) {
+        if(enemies.contains(enemy)) throw new RelationshipException("Usuário já está adicionado como inimigo.");
+        if(enemy.equals(this)) throw new RelationshipException("Usuário não pode ser inimigo de si mesmo.");
         enemies.add(enemy);
     }
 
@@ -385,9 +453,10 @@ public class User {
      * @return A list of the user's enemies.
      */
 
-    public ArrayList<String> getEnemies() {
+    public UserList getEnemies() {
         return enemies;
     }
+
 
     /**
      * Returns true if the provided user is an enemy of this user.
@@ -396,7 +465,7 @@ public class User {
      * @return True if the provided user is an enemy of this user.
      */
 
-    public boolean hasEnemy(String enemy) {
+    public boolean isEnemyOf(User enemy) {
         return this.enemies.contains(enemy);
     }
 
@@ -406,7 +475,7 @@ public class User {
      * @param friend The friend to be removed.
      */
 
-    public void removeFriend(String friend) {
+    public void removeFriend(User friend) {
         friends.remove(friend);
     }
 
@@ -454,12 +523,55 @@ public class User {
      * Removes all messages from the user's inbox.
      */
 
-    public void removeMessagesFromSender(String sender) {
+    public String printCommunities() {
+        if(communities.isEmpty()) {
+            return "{}";
+        }
+            StringBuilder sb = new StringBuilder();
+            sb.append('{');
+
+            for (Community community : communities) {
+                sb.append(community.toString());
+                sb.append(',');
+            }
+
+            if (sb.length() > 1) {
+                sb.deleteCharAt(sb.length() - 1);
+            }
+
+            sb.append('}');
+
+            return sb.toString();
+    }
+
+    public void removeMessagesFromSender(User sender) {
         for (Message message : inbox) {
             if (message.sender().equals(sender)) {
                 inbox.remove(message);
                 return;
             }
+        }
+    }
+
+    public void receivePost(Message message) {
+        timeline.add(message);
+    }
+
+    public void deleteAccount() {
+        for (User user : friends) {
+            user.removeFriend(this);
+        }
+        for (User user : fans) {
+            user.removeFan(this.login);
+        }
+        for (User user : idols) {
+            user.removeIdol(this.login);
+        }
+        for (User user : flirts) {
+            user.removeFlirt(this.login);
+        }
+        for (User user : enemies) {
+            user.removeEnemy(this.login);
         }
     }
 }

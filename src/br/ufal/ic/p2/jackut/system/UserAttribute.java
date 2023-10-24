@@ -19,6 +19,7 @@ public class UserAttribute {
         this.value = value;
     }
 
+
     public String getValue() {
         return value;
     }

@@ -6,7 +6,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * Message
  */
 
-public record Message(String sender, String message) {
+public class Message<T> {
+
+    private final T sender;
+    private final String message;
 
     /**
      * @param sender
@@ -15,10 +18,18 @@ public record Message(String sender, String message) {
 
     @JsonCreator
     public Message(
-            @JsonProperty("sender") String sender,
+            @JsonProperty("sender") T sender,
             @JsonProperty("message") String message) {
 
-        this.sender = sender;
+        this.sender = (T) sender;
         this.message = message;
+    }
+
+    public T sender() {
+        return sender;
+    }
+
+    public String message() {
+        return message;
     }
 }
