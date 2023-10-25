@@ -6,11 +6,7 @@ import java.util.Objects;
 import br.ufal.ic.p2.jackut.exceptions.AttributeException;
 import br.ufal.ic.p2.jackut.exceptions.MessageException;
 import br.ufal.ic.p2.jackut.exceptions.RelationshipException;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.*;
 
 
 /**
@@ -22,7 +18,6 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
         generator = ObjectIdGenerators.UUIDGenerator.class,
         property = "@json_id"
 )
-
 public class User {
     /**
      * The login name of the user.
@@ -59,7 +54,6 @@ public class User {
      * The user's fans.
      */
 
-    @JsonManagedReference
     private final UserList fans;
 
     /**
@@ -77,7 +71,7 @@ public class User {
      */
     private final UserList enemies;
 
-    private ArrayList<Community> communities = new ArrayList<>();
+    private ArrayList<Community> communities;
 
     /**
      * Constructs a User object with the provided login, password, and name.
@@ -375,7 +369,7 @@ public class User {
      */
 
     public void addIdol(User idol) {
-        if(idol.equals(this)) throw new RelationshipException("Usuário não pode ser ídolo de si mesmo.");
+        if(idol.equals(this)) throw new RelationshipException("Usuário não pode ser fã de si mesmo.");
         if(idols.contains(idol)) throw new RelationshipException("Usuário já está adicionado como ídolo.");
         if(enemies.contains(idol) || idol.isEnemyOf(this)) throw new RelationshipException("Função inválida: " + idol.getName() + " é seu inimigo.");
         idols.add(idol);
@@ -495,7 +489,7 @@ public class User {
      * @param idol The idol to be removed.
      */
 
-    public void removeIdol(String idol) {
+    public void removeIdol(User idol) {
         idols.remove(idol);
     }
 
@@ -505,7 +499,7 @@ public class User {
      * @param flirt The flirt to be removed.
      */
 
-    public void removeFlirt(String flirt) {
+    public void removeFlirt(User flirt) {
         flirts.remove(flirt);
     }
 
@@ -515,7 +509,7 @@ public class User {
      * @param enemy The enemy to be removed.
      */
 
-    public void removeEnemy(String enemy) {
+    public void removeEnemy(User enemy) {
         enemies.remove(enemy);
     }
 
@@ -523,25 +517,29 @@ public class User {
      * Removes all messages from the user's inbox.
      */
 
+    public void addCommunity(Community community) {
+        communities.add(community);
+        System.out.println(community.getName());
+    }
+
     public String printCommunities() {
-        if(communities.isEmpty()) {
-            return "{}";
+        System.out.println(communities.size());
+        StringBuilder sb = new StringBuilder();
+        sb.append('{');
+
+        for (Community community : communities) {
+            System.out.println(community.getName());
+            sb.append(community.getName());
+            sb.append(',');
         }
-            StringBuilder sb = new StringBuilder();
-            sb.append('{');
 
-            for (Community community : communities) {
-                sb.append(community.toString());
-                sb.append(',');
-            }
+        if (sb.length() > 1) {
+            sb.deleteCharAt(sb.length() - 1); // Remove the trailing comma
+        }
 
-            if (sb.length() > 1) {
-                sb.deleteCharAt(sb.length() - 1);
-            }
+        sb.append('}');
 
-            sb.append('}');
-
-            return sb.toString();
+        return sb.toString();
     }
 
     public void removeMessagesFromSender(User sender) {
@@ -553,25 +551,11 @@ public class User {
         }
     }
 
-    public void receivePost(Message message) {
-        timeline.add(message);
+    public void removeCommunity(Community community) {
+        communities.remove(community);
     }
 
-    public void deleteAccount() {
-        for (User user : friends) {
-            user.removeFriend(this);
-        }
-        for (User user : fans) {
-            user.removeFan(this.login);
-        }
-        for (User user : idols) {
-            user.removeIdol(this.login);
-        }
-        for (User user : flirts) {
-            user.removeFlirt(this.login);
-        }
-        for (User user : enemies) {
-            user.removeEnemy(this.login);
-        }
+    public void receivePost(Message message) {
+        timeline.add(message);
     }
 }

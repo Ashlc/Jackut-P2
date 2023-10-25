@@ -1,11 +1,7 @@
 package br.ufal.ic.p2.jackut.system;
 
 import br.ufal.ic.p2.jackut.exceptions.CommunityException;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
-import java.util.ArrayList;
+import com.fasterxml.jackson.annotation.*;
 
 /**
  * This class represents a community in the system.
@@ -13,15 +9,15 @@ import java.util.ArrayList;
  */
 
 @JsonIdentityInfo(
-        generator = ObjectIdGenerators.UUIDGenerator.class,
-        property = "@json_id"
+        generator = ObjectIdGenerators.PropertyGenerator.class,
+        property = "name"
 )
-
 public class Community {
     private final String name;
     private final String description;
     private final User owner;
     private final UserList members;
+
     /**
      * Creates a new community.
      *
@@ -42,7 +38,7 @@ public class Community {
         this.name = name;
         this.description = description;
         this.members = members;
-
+        owner.addCommunity(this);
     }
 
     /**
@@ -65,11 +61,16 @@ public class Community {
 
     /**
      * Returns the owner of the community.
-     * @return
+     * @return the owner of the community.
      */
 
-    public String getOwner() {
-        return this.owner.getName();
+    public User getOwner() {
+        return this.owner;
+    }
+
+    @JsonIgnore
+    public String getOwnerLogin() {
+        return this.owner.getLogin();
     }
 
     /**
@@ -98,6 +99,7 @@ public class Community {
     public void addMember(User user) {
         if (!this.members.contains(user)) {
             this.members.add(user);
+            user.addCommunity(this);
         } else throw new CommunityException("Usuario já faz parte dessa comunidade.");
     }
 
@@ -126,6 +128,12 @@ public class Community {
         UserMessage post = new UserMessage(sender, contents);
         for (User user : this.members) {
             user.receivePost(post);
+        }
+    }
+
+    public void deleteCommunity() {
+        for (User user : this.members) {
+            user.removeCommunity(this);
         }
     }
 

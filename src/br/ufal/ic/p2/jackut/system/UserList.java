@@ -1,7 +1,5 @@
 package br.ufal.ic.p2.jackut.system;
 import java.util.ArrayList;
-import com.fasterxml.jackson.annotation.JsonValue;
-import com.fasterxml.jackson.annotation.JsonBackReference;
 
 
 public class UserList extends ArrayList<User> implements PrintAll {
@@ -21,7 +19,7 @@ public class UserList extends ArrayList<User> implements PrintAll {
         sb.append('{');
 
         for (User user : this) {
-            sb.append(user.getName());
+            sb.append(user.getLogin());
             sb.append(',');
         }
 

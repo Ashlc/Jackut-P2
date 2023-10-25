@@ -5,7 +5,6 @@ import br.ufal.ic.p2.jackut.exceptions.*;
 import java.io.*;
 import java.util.*;
 
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.databind.*;
 
@@ -20,7 +19,7 @@ public class Database {
     private ArrayList<User> users;
     private ArrayList<Session> sessions;
     //    private ArrayList<Comunity> comunities;
-    private HashMap<String, Community> communities = new HashMap<>();
+    private ArrayList<Community> communities = new ArrayList<>();
 
     /**
      * Constructs a Database object with initial user data imported from a file if file exists.
@@ -66,12 +65,13 @@ public class Database {
         File json = new File("communities.json");
         if (json.exists()) {
             try {
-                this.communities = objectMapper.readValue(json, objectMapper.getTypeFactory().constructMapType(HashMap.class, String.class, Community.class));
+                this.communities = objectMapper.readValue(json, objectMapper.getTypeFactory().constructCollectionType(ArrayList.class, Community.class));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
     }
+
 
     /**
      * Shuts down the database, exporting all data to files.
@@ -90,7 +90,8 @@ public class Database {
         try {
             objectMapper.writeValue(new File("users.json"), users);
         } catch (IOException e) {
-            throw new JsonException("Erro ao escrever arquivo de usu�rios.");
+
+            throw new JsonException("Erro ao escrever arquivo de usuários.");
         }
     }
 
@@ -112,7 +113,7 @@ public class Database {
 
     public void flush() {
         this.users = new ArrayList<>();
-        this.communities = new HashMap<>();
+        this.communities = new ArrayList<>();
         this.sessions = new ArrayList<>();
         if (new File("users.json").exists()) {
             System.out.println("users.json exists");
@@ -136,16 +137,16 @@ public class Database {
 
     public void newUser(String login, String password, String name) {
         if (login == null) {
-            throw new UserException("Login inv�lido.");
+            throw new UserException("Login inválido.");
         }
 
         if (password == null) {
-            throw new UserException("Senha inv�lida.");
+            throw new UserException("Senha inválida.");
         }
 
         for (User user : this.users) {
             if (user.getLogin().equals(login)) {
-                throw new UserException("Conta com esse nome j� existe.");
+                throw new UserException("Conta com esse nome já existe.");
             }
         }
 
@@ -171,10 +172,10 @@ public class Database {
                 sessions.add(new Session(user, id)); // add new session to sessions
                 return id;
             } else {
-                throw new UserException("Login ou senha inv�lidos."); // if user password is not equal to password
+                throw new UserException("Login ou senha inválidos."); // if user password is not equal to password
             }
         } catch (RuntimeException error) {
-            throw new UserException("Login ou senha inv�lidos."); // if user not found
+            throw new UserException("Login ou senha inválidos."); // if user not found
         }
     }
 
@@ -192,7 +193,7 @@ public class Database {
                 return user;
             }
         }
-        throw new UserException("Usu�rio n�o cadastrado."); // if user not found
+        throw new UserException("Usuário não cadastrado."); // if user not found
     }
 
     /**
@@ -234,7 +235,7 @@ public class Database {
         User user = session.user();
 
         if (user == null) {
-            throw new UserException("Usu�rio n�o cadastrado.");
+            throw new UserException("Usuário não cadastrado.");
         }
 
         return user;
@@ -255,7 +256,7 @@ public class Database {
             }
         }
 
-        throw new UserException("Usu�rio n�o cadastrado."); // if session not found
+        throw new UserException("Usuário não cadastrado."); // if session not found
     }
 
     /**
@@ -267,8 +268,24 @@ public class Database {
 
     public void deleteAccount(String sessionId) {
         User user = getUserBySessionId(sessionId);
-        user.deleteAccount();
+        sessions.remove(findSession(sessionId));
         this.users.remove(user);
+
+        for(User u : this.users) {
+            u.removeMessagesFromSender(user);
+            u.removeEnemy(user);
+            u.removeFlirt(user);
+            u.removeIdol(user);
+            u.removeFriend(user);
+        }
+
+        for(Community c : this.communities) {
+            if(c.getOwner().equals(user)) {
+                c.deleteCommunity();
+                this.communities.remove(c);
+            }
+            c.removeMember(user);
+        }
     }
 
     /**
@@ -371,11 +388,21 @@ public class Database {
      */
 
     public Community getCommunity(String name) {
-        if (communities.containsKey(name)) {
-            return communities.get(name);
-        } else {
-            throw new CommunityException("Comunidade n�o existe.");
+        for (Community community : communities) {
+            if (community.getName().equals(name)) {
+                return community;
+            }
         }
+        throw new CommunityException("Comunidade não existe.");
+    }
+
+    public boolean hasCommunity(String name) {
+        for (Community community : communities) {
+            if (community.getName().equals(name)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -400,18 +427,21 @@ public class Database {
      * @throws RuntimeException if the session ID is invalid or if the community name is invalid.
      */
 
-    public void createComunity(String session, String name, String description) {
+    public void createCommunity(String session, String name, String description) {
         User user = getUserBySessionId(session);
-        if (communities.containsKey(name)) {
-            throw new CommunityException("Comunidade com esse nome j� existe.");
+
+        if(hasCommunity(name)) {
+            throw new CommunityException("Comunidade com esse nome já existe.");
         }
 
         UserList members = new UserList();
         members.add(user);
 
         Community community = new Community(name, description, user, members);
-        communities.put(name, community);
+
+        communities.add(community);
     }
+
 
     /**
      * Returns the description of a community.
@@ -422,10 +452,10 @@ public class Database {
      */
 
     public String getCommunityDescription(String name) {
-        if (communities.containsKey(name)) {
-            return communities.get(name).getDescription();
+        if(hasCommunity(name)) {
+            return getCommunity(name).getDescription();
         } else {
-            throw new CommunityException("Comunidade n�o existe.");
+            throw new CommunityException("Comunidade não existe.");
         }
     }
 
@@ -438,10 +468,11 @@ public class Database {
      */
 
     public String getCommunityOwner(String name) {
-        if (communities.containsKey(name)) {
-            return communities.get(name).getOwner();
+
+        if (hasCommunity(name)) {
+            return getCommunity(name).getOwnerLogin();
         } else {
-            throw new CommunityException("Comunidade n�o existe.");
+            throw new CommunityException("Comunidade não existe.");
         }
     }
 
@@ -455,12 +486,10 @@ public class Database {
 
     public String getCommunityMembers(String name) {
 
-        if (communities.containsKey(name)) {
-            Community community = communities.get(name);
-            return community.membersToString();
-
+        if(hasCommunity(name)) {
+            return getCommunity(name).membersToString();
         } else {
-            throw new CommunityException("Comunidade n�o existe.");
+            throw new CommunityException("Comunidade não existe.");
         }
     }
 
@@ -474,11 +503,11 @@ public class Database {
 
     public void addToCommunity(String session, String name) {
         User member = getUserBySessionId(session);
-        if (communities.containsKey(name)) {
-            Community community = communities.get(name);
+        if(hasCommunity(name)) {
+            Community community = getCommunity(name);
             community.addMember(member);
         } else {
-            throw new CommunityException("Comunidade n�o existe.");
+            throw new CommunityException("Comunidade não existe.");
         }
     }
 
@@ -534,11 +563,13 @@ public class Database {
         user.addFlirt(flirted);
     }
 
-    /**
+  /**
      * Checks if a user is flirting with another user.
-     * @param session
-     * @param flirt
-     * @return
+     *
+     * @param session The current session.
+     * @param flirt  The login of the flirt.
+     * @return True if the user is flirting with the flirt.
+     * @throws RuntimeException if either user login is invalid.
      */
 
     public boolean isFlirt (String session, String flirt) {

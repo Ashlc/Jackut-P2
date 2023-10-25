@@ -1,9 +1,6 @@
 package br.ufal.ic.p2.jackut.facades;
 
 import br.ufal.ic.p2.jackut.system.Database;
-import br.ufal.ic.p2.jackut.system.Session;
-
-import java.util.ArrayList;
 
 public class Facade {
     private Database DB = new Database();
@@ -55,7 +52,7 @@ public class Facade {
     }
 
     public void criarComunidade(String sessao, String nome, String descricao) {
-        DB.createComunity(sessao, nome, descricao);
+        DB.createCommunity(sessao, nome, descricao);
     }
 
     public String getDescricaoComunidade(String name) {
