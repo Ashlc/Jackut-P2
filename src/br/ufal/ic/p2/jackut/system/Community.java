@@ -1,82 +1,140 @@
 package br.ufal.ic.p2.jackut.system;
 
 import br.ufal.ic.p2.jackut.exceptions.CommunityException;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 
-import java.util.ArrayList;
+/**
+ * This class represents a community in the system.
+ * It contains the community's name, description, owner and members.
+ */
 
+@JsonIdentityInfo(
+        generator = ObjectIdGenerators.PropertyGenerator.class,
+        property = "name"
+)
 public class Community {
     private final String name;
     private final String description;
-    private final String owner;
-    private ArrayList<String> members;
-    private ArrayList<Message> inbox;
+    private final User owner;
+    private final UserList members;
+
+    /**
+     * Creates a new community.
+     *
+     * @param name        the name of the community.
+     * @param description the description of the community.
+     * @param owner       the owner of the community.
+     * @param members     the members of the community.
+     */
 
     @JsonCreator
     public Community(
             @JsonProperty("name") String name,
             @JsonProperty("description") String description,
-            @JsonProperty("owner") String owner,
-            @JsonProperty("members") ArrayList<String> members,
-            @JsonProperty("inbox") ArrayList<Message> inbox) {
+            @JsonProperty("owner") User owner,
+            @JsonProperty("members") UserList members) {
 
         this.owner = owner;
         this.name = name;
         this.description = description;
         this.members = members;
-        this.inbox = inbox;
-
+        owner.addCommunity(this);
     }
+
+    /**
+     * Returns the name of the community.
+     * @return
+     */
 
     public String getName() {
         return this.name;
     }
 
+    /**
+     * Returns the description of the community.
+     * @return
+     */
+
     public String getDescription() {
         return this.description;
     }
 
-    public String getOwner() {
+    /**
+     * Returns the owner of the community.
+     * @return the owner of the community.
+     */
+
+    public User getOwner() {
         return this.owner;
     }
 
-    public ArrayList<String> getMembers() {
+    @JsonIgnore
+    public String getOwnerLogin() {
+        return this.owner.getLogin();
+    }
+
+    /**
+     * Returns the members of the community.
+     * @return
+     */
+
+    public UserList getMembers() {
         return this.members;
     }
 
+    /**
+     * Returns the members of the community as a string.
+     * @return
+     */
+
     public String membersToString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append('{');
-        for (String member : this.members) {
-            sb.append(member).append(",");
-        }
-        sb.deleteCharAt(sb.length() - 1);
-        sb.append('}');
-        return sb.toString();
+        return this.members.printAll();
     }
 
-    public void addMember(String login) {
-        if (!this.members.contains(login)) {
-            this.members.add(login);
+    /**
+     * Adds a member to the community.
+     * @param user
+     */
+
+    public void addMember(User user) {
+        if (!this.members.contains(user)) {
+            this.members.add(user);
+            user.addCommunity(this);
         } else throw new CommunityException("Usuario já faz parte dessa comunidade.");
     }
 
-    public void addMessage(Message message) {
-        this.inbox.add(message);
+    /**
+     * Returns true if the community has the provided member.
+     * @param user
+     * @return
+     */
+
+    public boolean hasMember(User user) {
+        return this.members.contains(user);
     }
 
-    public String readMessage() {
-        if (!this.inbox.isEmpty()) {
-            String message = this.inbox.get(0).message();
-            this.inbox.remove(0);
-            return message;
-        } else {
-            throw new CommunityException("Não há mensagens.");
+    /**
+     * Removes a member from the community.
+     * @param user
+     */
+
+    public void removeMember(User user) {
+        if (this.members.contains(user)) {
+            this.members.remove(user);
+        } else throw new CommunityException("Usuario não faz parte dessa comunidade.");
+    }
+
+    public void sendPost (User sender, String contents) {
+        UserMessage post = new UserMessage(sender, contents);
+        for (User user : this.members) {
+            user.receivePost(post);
         }
     }
 
-    public boolean hasMember(String login) {
-        return this.members.contains(login);
+    public void deleteCommunity() {
+        for (User user : this.members) {
+            user.removeCommunity(this);
+        }
     }
+
 }

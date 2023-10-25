@@ -1,9 +1,6 @@
 package br.ufal.ic.p2.jackut.facades;
 
 import br.ufal.ic.p2.jackut.system.Database;
-import br.ufal.ic.p2.jackut.system.Session;
-
-import java.util.ArrayList;
 
 public class Facade {
     private Database DB = new Database();
@@ -55,7 +52,7 @@ public class Facade {
     }
 
     public void criarComunidade(String sessao, String nome, String descricao) {
-        DB.createComunity(sessao, nome, descricao);
+        DB.createCommunity(sessao, nome, descricao);
     }
 
     public String getDescricaoComunidade(String name) {
@@ -83,6 +80,38 @@ public class Facade {
     }
 
     public String lerMensagem(String sessao) {
-        return DB.readCommunityMessage(sessao);
+        return DB.readPosts(sessao);
+    }
+
+    public boolean ehFa(String login, String idolo) {
+        return DB.isFan(login, idolo);
+    }
+
+    public void adicionarIdolo(String sessao, String idolo) {
+        DB.addIdol(sessao, idolo);
+    }
+
+    public String getFas (String login) {
+        return DB.getFans(login);
+    }
+
+    public void adicionarPaquera(String sessao, String paquera) {
+        DB.addFlirt(sessao, paquera);
+    }
+
+    public boolean ehPaquera(String login, String paquera) {
+        return DB.isFlirt(login, paquera);
+    }
+
+    public String getPaqueras(String login) {
+        return DB.getFlirts(login);
+    }
+
+    public void adicionarInimigo(String sessao, String inimigo) {
+        DB.addEnemy(sessao, inimigo);
+    }
+
+    public void removerUsuario(String sessao) {
+        DB.deleteAccount(sessao);
     }
 }

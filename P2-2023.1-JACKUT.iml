@@ -14,5 +14,6 @@
     <orderEntry type="library" name="jackson-annotations" level="project" />
     <orderEntry type="library" name="jackson-core" level="project" />
     <orderEntry type="library" name="jackson-databind" level="project" />
+    <orderEntry type="library" name="sqlite-jdbc-3.36.0.3" level="project" />
   </component>
 </module>
